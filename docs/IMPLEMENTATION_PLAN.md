@@ -228,15 +228,15 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 
 **Tasks:**
 
-- [ ] Run the persistence spike and record the decision as an ADR (SQLite vs Tauri store, section 4.2)
-- [ ] Define repository ports in owning modules; implement adapters in `modules/persistence`
-- [ ] Repositories for `AdHocRequest`, `EnvironmentVariable`, `Project`, `Collection`, `SavedRequest`, `UserSettings`, `UserAccount`, `Session`
-- [ ] Include `createdAt`, `updatedAt`, and `deletedAt` (tombstones) on syncable entities
-- [ ] Guest path: ad-hoc draft and env vars with `userId = null`
-- [ ] Enforce unique (`userId`, `key`) for non-deleted env vars
-- [ ] Implement field-level encryption with the key held in the OS keychain
-- [ ] In-memory repository fakes for unit tests
-- [ ] Persist the ad-hoc draft with debounced writes; guard against losing unsaved work on crash
+- [x] Run the persistence spike and record the decision as an ADR (SQLite vs Tauri store, section 4.2)
+- [x] Define repository ports in owning modules; implement adapters in `modules/persistence`
+- [x] Repositories for `AdHocRequest`, `EnvironmentVariable`, `Project`, `Collection`, `SavedRequest`, `UserSettings`, `UserAccount`, `Session`
+- [x] Include `createdAt`, `updatedAt`, and `deletedAt` (tombstones) on syncable entities
+- [x] Guest path: ad-hoc draft and env vars with `userId = null`
+- [x] Enforce unique (`userId`, `key`) for non-deleted env vars
+- [x] Implement field-level encryption with the key held in the OS keychain
+- [x] In-memory repository fakes for unit tests
+- [x] Persist the ad-hoc draft with debounced writes; guard against losing unsaved work on crash
 
 **Acceptance criteria:**
 
@@ -545,7 +545,7 @@ After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environm
 |--:|---|---|---|
 | 1 | **Cloud sync backend** (hosted service or custom API). No document defines it | Phase 8 | Build against a `SyncRemote` port with a fake adapter until decided |
 | 2 | Production HTTP adapter (Fetch vs Tauri HTTP plugin) | Phase 2 | Tauri HTTP adapter in production; Fetch for tests |
-| 3 | Local store (SQLite vs Tauri store) | Phase 1 | SQLite |
+| 3 | Local store (SQLite vs Tauri store) | ~~Phase 1~~ | **Resolved:** SQLite ([ADR-005](./adr/ADR-005-local-persistence.md)) |
 | 4 | Body editor allowed for DELETE? | Phase 2–3 | Yes; only GET is disabled |
 | 5 | Do guests persist preferences? | Phase 6 | No; defaults only |
 | 6 | Saved requests: explicit save or autosave | Phase 7 | Explicit **Save Request** only |
@@ -585,7 +585,7 @@ A task is done when:
 | Document | Fix |
 |---|---|
 | ARCHITECTURE §1.4 | Remove "folders" from the Projects/Collections module description |
-| ARCHITECTURE §17 | Mark questions 1 and 3 as resolved by this plan (section 4.1); question 2 pending the Phase 1 spike |
+| ARCHITECTURE §17 | Mark questions 1 and 3 as resolved by this plan (section 4.1); question 2 resolved by ADR-005 (SQLite) |
 | ARCHITECTURE §12 | Add `modules/persistence` and `presentation/` folders to the structure guideline |
 | ARCHITECTURE §11 | Note that stale-send handling is internal (token); the UI has no Cancel button (UI v1.0 §5.4) |
 | DATA_MODEL | Add a note that `ResponseView.size` is derived from `body`, not stored |
@@ -599,7 +599,7 @@ A task is done when:
 | Phase | Status | Done | Notes |
 |---|---|---:|---|
 | 0 Foundation, shell, design system | Completed | 11/11 | Shell + Stitch tokens/UI shells; mock data only; no HTTP/persistence yet |
-| 1 Persistence and secrets | Not Started | 0/9 | Spike: SQLite vs Tauri store |
+| 1 Persistence and secrets | Completed | 9/9 | SQLite + keychain encryption; guest draft/env persist |
 | 2 Request engine and resolver | Not Started | 0/13 | Spike: Fetch vs Tauri HTTP adapter |
 | 3 Workspace and builder UI | Not Started | 0/12 | |
 | 4 Response viewer | Not Started | 0/10 | |

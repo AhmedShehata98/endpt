@@ -29,7 +29,7 @@ App present solution for backend (API) Integration and testing easier with light
 - Organize the application into cohesive, independently manageable modules under `modules/`, including:
   - **Request:** Application `RequestService`, HTTP ports, and Infrastructure HTTP adapters (Request Engine).
   - **Response:** Displays response status, headers, body, and performance information.
-  - **Projects / Collections:** Manage project metadata, collections, folders, and saved requests.
+  - **Projects / Collections:** Manage project metadata, collections, and saved requests.
   - **Environment:** Environment variables and placeholder resolution.
   - **Account / Sync:** Optional accounts and cloud sync.
   - **Persistence:** Local storage adapters (separate from HTTP execution).
@@ -323,14 +323,16 @@ modules/
 │   │       └── fetch-http-client.ts
 │   ├── ports/
 │   │   └── http-client.interface.ts
+│   ├── presentation/          # when builder UI lives in the module
 │   └── types/
 │       └── http.types.ts
 ├── response/
 ├── project/
 ├── environment/
 ├── account/
-└── sync/
-src/                    # app shell / Presentation composition
+├── sync/
+└── persistence/               # SQLite adapters, secret cipher (ports stay in owning modules)
+src/                           # app shell / composition root
 ```
 
 Other modules follow the same idea when they need Application logic, ports, or Infrastructure adapters. Align module ownership with [`DATA_MODEL.md`](./DATA_MODEL.md) §8 and the implementation plan.
@@ -338,9 +340,10 @@ Other modules follow the same idea when they need Application logic, ports, or I
 ### Module Organization
 - **request:** Send pipeline — `RequestService`, `HttpClient`, `FetchHttpClient`.
 - **response:** Response viewing concerns.
-- **project:** Projects and collections.
+- **project:** Projects and collections (no nested folders inside collections for MVP).
 - **environment:** Variables and `{{key}}` resolution used before send.
 - **account / sync:** Optional identity and cloud sync.
+- **persistence:** Local SQLite adapters and encryption helpers; repository ports live in owning modules.
 - **src:** Tauri/React shell wiring (composition root injects Infrastructure into Application).
 
 ---
@@ -420,7 +423,7 @@ Local development vs production builds via standard Vite/Tauri env configuration
 ## 17. Open Questions
 
 - When to introduce a native desktop HTTP Infrastructure adapter vs continuing with `FetchHttpClient` in the Tauri webview.
-- Exact local persistence technology (SQLite vs Tauri store) — see implementation plan Phase 1.
+- ~~Exact local persistence technology (SQLite vs Tauri store)~~ — **Resolved:** SQLite via `@tauri-apps/plugin-sql` ([ADR-005](./adr/ADR-005-local-persistence.md)).
 - Align [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) Phase 2 wording with this document’s port + adapter model (desktop-safe HTTP as an alternative adapter, not a contradiction of the `HttpClient` port).
 
 ---

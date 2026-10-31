@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import type { AppRepositories } from "@modules/persistence";
 import type { SyncStatus } from "@modules/sync";
+import { getAppRepositories } from "@/app/composition";
 import { isAuthView, type AppView } from "@/app/navigation";
 import { MOCK_RESPONSE } from "@/app/mock-data";
 import { useCollapsedSidebar } from "@/hooks/useCollapsedSidebar";
@@ -21,6 +23,7 @@ import { WorkspaceView } from "@/views/WorkspaceView";
 const PHASE0_SYNC_STATUS: SyncStatus = "local-only";
 
 export default function App() {
+  const [repos, setRepos] = useState<AppRepositories | null>(null);
   const [view, setView] = useState<AppView>("workspace");
   const [variablesOpen, setVariablesOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
@@ -31,8 +34,21 @@ export default function App() {
   const { preferences, updatePreferences, setSyncEnabled } = useUserPreferences();
   const { draft, setDraft, startNewRequest, openSavedRequest } = useWorkspaceDraft(
     preferences.defaultHttpMethod,
+    repos?.adHocRequests ?? null,
   );
-  const { variables, setVariables } = useEnvironmentVariables();
+  const { variables, setVariables } = useEnvironmentVariables(
+    repos?.environmentVariables ?? null,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    void getAppRepositories().then((created) => {
+      if (!cancelled) setRepos(created);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const goWorkspace = useCallback(() => {
     setView("workspace");
@@ -54,7 +70,6 @@ export default function App() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [createNewRequest]);
-
 
   if (isAuthView(view)) {
     return view === "sign-in" ? (

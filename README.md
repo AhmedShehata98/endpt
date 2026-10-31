@@ -27,12 +27,15 @@ pnpm dev
 pnpm tauri build
 ```
 
-## Lint and format
+## Lint, format, and test
 
 ```bash
 pnpm lint
 pnpm format
+pnpm test
 ```
+
+Local data uses SQLite (`sqlite:endpt.db`) inside the Tauri app. Env values and auth secrets are encrypted at rest; the master key lives in the OS keychain.
 
 ## Stack
 

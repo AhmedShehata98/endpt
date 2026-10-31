@@ -196,6 +196,8 @@ Not a persisted domain entity. Holds the last response for the viewer (FR-08–F
 | `errorMessage` | string \| null | Clear error when send fails |
 | `receivedAt` | datetime | |
 
+`size` (if shown in UI) is derived from `body` length/bytes at render time and is not stored.
+
 Fullscreen (FR-10) is UI state over this object, not a separate record.
 
 ---
