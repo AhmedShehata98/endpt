@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { AppRepositories } from "@modules/persistence";
 import type { SyncStatus } from "@modules/sync";
 import { getAppRepositories } from "@/app/composition";
 import { isAuthView, type AppView } from "@/app/navigation";
-import { MOCK_RESPONSE } from "@/app/mock-data";
 import { Toast } from "@/components/Toast";
 import { useCollapsedSidebar } from "@/hooks/useCollapsedSidebar";
 import { useEnvironmentVariables } from "@/hooks/useEnvironmentVariables";
 import { useSession } from "@/hooks/useSession";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWorkspaceDraft } from "@/hooks/useWorkspaceDraft";
+import { useWorkspaceSend } from "@/hooks/useWorkspaceSend";
 import { AppHeader } from "@/shell/AppHeader";
 import { Sidebar } from "@/shell/Sidebar";
 import { CollectionsView } from "@/views/CollectionsView";
@@ -30,7 +30,6 @@ export default function App() {
   const [view, setView] = useState<AppView>("workspace");
   const [variablesOpen, setVariablesOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
-  const [response] = useState(MOCK_RESPONSE);
 
   const onPersistError = useCallback((message: string) => {
     setPersistError(message);
@@ -39,18 +38,36 @@ export default function App() {
   const collapsed = useCollapsedSidebar();
   const session = useSession();
   const { preferences, updatePreferences, setSyncEnabled } = useUserPreferences();
-  const { draft, setDraft, startNewRequest, openSavedRequest, ready: draftReady } =
-    useWorkspaceDraft({
-      defaultMethod: preferences.defaultHttpMethod,
-      repository: repos?.adHocRequests ?? null,
-      onPersistError,
-    });
+  const {
+    draft,
+    setDraft,
+    startNewRequest,
+    openSavedRequest,
+    ready: draftReady,
+    saveState,
+  } = useWorkspaceDraft({
+    defaultMethod: preferences.defaultHttpMethod,
+    repository: repos?.adHocRequests ?? null,
+    onPersistError,
+  });
   const { variables, setVariables, ready: envReady } = useEnvironmentVariables({
     repository: repos?.environmentVariables ?? null,
     onPersistError,
   });
+  const {
+    send,
+    sendDraft,
+    responseForView,
+    showPreviousResponse,
+    definedKeys,
+    unresolvedForDraft,
+  } = useWorkspaceSend({ variables });
 
   const storageReady = draftReady && envReady;
+  const unresolvedCount = useMemo(
+    () => unresolvedForDraft(draft).length,
+    [draft, unresolvedForDraft],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -85,17 +102,31 @@ export default function App() {
     setView("workspace");
   }, [startNewRequest, storageReady]);
 
+  const sendCurrentDraft = useCallback(() => {
+    if (!storageReady || send.status === "sending") return;
+    void sendDraft(draft);
+  }, [draft, send.status, sendDraft, storageReady]);
+
+  const openVariables = useCallback(() => {
+    setVariablesOpen(true);
+  }, []);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const meta = event.metaKey || event.ctrlKey;
       if (meta && event.key.toLowerCase() === "n") {
         event.preventDefault();
         createNewRequest();
+        return;
+      }
+      if (meta && event.key === "Enter") {
+        event.preventDefault();
+        sendCurrentDraft();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [createNewRequest]);
+  }, [createNewRequest, sendCurrentDraft]);
 
   if (bootError) {
     return (
@@ -140,11 +171,12 @@ export default function App() {
         <AppHeader
           requestName={draft.name ?? "Untitled Request"}
           breadcrumb={null}
-          unresolvedCount={0}
+          saveState={saveState}
+          unresolvedCount={unresolvedCount}
           syncStatus={PHASE0_SYNC_STATUS}
           signedIn={session.signedIn}
           displayName={session.displayName}
-          onOpenVariables={() => setVariablesOpen(true)}
+          onOpenVariables={openVariables}
           onSignIn={() => setView("sign-in")}
           onSignOut={() => {
             session.signOut();
@@ -163,9 +195,17 @@ export default function App() {
                 <WorkspaceView
                   draft={draft}
                   onDraftChange={setDraft}
-                  response={response}
+                  send={send}
+                  response={responseForView}
+                  showPreviousResponse={showPreviousResponse}
+                  definedKeys={definedKeys}
                   wrapLines={preferences.wrapResponseLines}
-                  onOpenFullscreen={() => setFullscreenOpen(true)}
+                  onSend={sendCurrentDraft}
+                  onFixVariable={openVariables}
+                  onOpenFullscreen={() => {
+                    if (responseForView) setFullscreenOpen(true);
+                  }}
+                  onTryAgain={sendCurrentDraft}
                 />
               )}
               {view === "collections" && (
@@ -200,13 +240,15 @@ export default function App() {
         onClose={() => setVariablesOpen(false)}
       />
 
-      <ResponseFullscreen
-        open={fullscreenOpen}
-        response={response}
-        wrapLines={preferences.wrapResponseLines}
-        onWrapLinesChange={(wrapResponseLines) => updatePreferences({ wrapResponseLines })}
-        onClose={() => setFullscreenOpen(false)}
-      />
+      {responseForView && (
+        <ResponseFullscreen
+          open={fullscreenOpen}
+          response={responseForView}
+          wrapLines={preferences.wrapResponseLines}
+          onWrapLinesChange={(wrapResponseLines) => updatePreferences({ wrapResponseLines })}
+          onClose={() => setFullscreenOpen(false)}
+        />
+      )}
 
       {persistError ? (
         <div className="pointer-events-none fixed bottom-4 right-4 z-50">

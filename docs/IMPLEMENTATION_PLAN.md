@@ -292,18 +292,18 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 
 **Tasks:**
 
-- [ ] Split layout: resizable request editor and response region with minimum heights
-- [ ] Request row: method selector (default from `UserSettings.defaultHttpMethod`), URL field, **Send**
-- [ ] Placeholder styling in fields: resolved vs **Not defined** with **Fix variable** action
-- [ ] Tabs: **Params**, **Headers**, **Body**, **Auth**
-- [ ] Key/value editors with enable/disable, explicit **Add** action, URL ↔ params sync that does not delete unrelated params
-- [ ] Body: None / JSON / Raw editor, inline JSON validation, disabled state for GET with explanation
-- [ ] Auth: enable toggle and Token / API key / Username-password fields, masked with reveal
-- [ ] Send states: idle, invalid (inline errors), sending (**Sending…**, duplicate sends blocked), HTTP response, network failure with **Try again**
-- [ ] Keep the previous response visible, labeled **Previous response**, while sending
-- [ ] Persist and restore `AdHocRequest` so edit and resend works (AC-02)
-- [ ] Header shows **Unsaved changes** / **Saved** state when relevant
-- [ ] Keyboard: Send (`Ctrl/Cmd+Enter`), New Request (`Ctrl/Cmd+N`)
+- [x] Split layout: resizable request editor and response region with minimum heights
+- [x] Request row: method selector (default from `UserSettings.defaultHttpMethod`), URL field, **Send**
+- [x] Placeholder styling in fields: resolved vs **Not defined** with **Fix variable** action
+- [x] Tabs: **Params**, **Headers**, **Body**, **Auth**
+- [x] Key/value editors with enable/disable, explicit **Add** action, URL ↔ params sync that does not delete unrelated params
+- [x] Body: None / JSON / Raw editor, inline JSON validation, disabled state for GET with explanation
+- [x] Auth: enable toggle and Token / API key / Username-password fields, masked with reveal
+- [x] Send states: idle, invalid (inline errors), sending (**Sending…**, duplicate sends blocked), HTTP response, network failure with **Try again**
+- [x] Keep the previous response visible, labeled **Previous response**, while sending
+- [x] Persist and restore `AdHocRequest` so edit and resend works (AC-02)
+- [x] Header shows **Unsaved changes** / **Saved** state when relevant
+- [x] Keyboard: Send (`Ctrl/Cmd+Enter`), New Request (`Ctrl/Cmd+N`)
 
 **Acceptance criteria:**
 
@@ -601,7 +601,7 @@ A task is done when:
 | 0 Foundation, shell, design system | Completed | 11/11 | Shell + Stitch tokens/UI shells; mock data only; no HTTP/persistence yet |
 | 1 Persistence and secrets | Completed | 9/9 | SQLite + keychain encryption; guest draft/env persist |
 | 2 Request engine and resolver | Completed | 13/13 | Tauri HTTP plugin in production; Fetch for tests and non-desktop runs |
-| 3 Workspace and builder UI | Not Started | 0/12 | |
+| 3 Workspace and builder UI | Completed | 12/12 | Wired to RequestService; SendState + URL↔params + placeholders |
 | 4 Response viewer | Not Started | 0/10 | |
 | 5 Environment variables | Not Started | 0/9 | |
 | 6 Accounts and settings | Not Started | 0/7 | |

@@ -1,19 +1,67 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button, Input, Select, Tabs } from "@/components";
-import { HTTP_METHODS, type HttpMethod, type RequestDraft } from "@modules/request";
+import {
+  HTTP_METHODS,
+  syncParamsFromUrl,
+  syncUrlFromParams,
+  type HttpMethod,
+  type RequestDraft,
+  type ValidationIssue,
+} from "@modules/request";
+import type { SendState } from "@/app/workspace-state";
 import { AuthTab } from "./AuthTab";
 import { BodyTab } from "./BodyTab";
 import { PairEditor } from "./PairEditor";
+import { PlaceholderHints } from "./PlaceholderHints";
 
 type BuilderTab = "params" | "headers" | "body" | "auth";
 
 interface RequestBuilderPanelProps {
   draft: RequestDraft;
   onDraftChange: (draft: RequestDraft) => void;
+  send: SendState;
+  definedKeys: ReadonlySet<string>;
+  onSend: () => void;
+  onFixVariable: () => void;
 }
 
-export function RequestBuilderPanel({ draft, onDraftChange }: RequestBuilderPanelProps) {
+export function RequestBuilderPanel({
+  draft,
+  onDraftChange,
+  send,
+  definedKeys,
+  onSend,
+  onFixVariable,
+}: RequestBuilderPanelProps) {
   const [builderTab, setBuilderTab] = useState<BuilderTab>("params");
+  const sending = send.status === "sending";
+  const issues = send.status === "invalid" ? send.issues : [];
+  const urlError = firstIssue(issues, "url");
+  const bodyError = firstIssue(issues, "body");
+  const otherErrors = issues.filter(
+    (issue) => issue.field !== "url" && issue.field !== "body",
+  );
+
+  const issueSummary = useMemo(
+    () => otherErrors.map((issue) => issue.message).join(" · "),
+    [otherErrors],
+  );
+
+  const onUrlChange = (url: string) => {
+    onDraftChange({
+      ...draft,
+      url,
+      queryParams: syncParamsFromUrl(url, draft.queryParams),
+    });
+  };
+
+  const onParamsChange = (queryParams: RequestDraft["queryParams"]) => {
+    onDraftChange({
+      ...draft,
+      queryParams,
+      url: syncUrlFromParams(draft.url, queryParams),
+    });
+  };
 
   return (
     <div className="flex h-full flex-col bg-bg-surface">
@@ -33,18 +81,39 @@ export function RequestBuilderPanel({ draft, onDraftChange }: RequestBuilderPane
             </option>
           ))}
         </Select>
-        <Input
-          mono
-          aria-label="Request URL"
-          value={draft.url}
-          onChange={(e) => onDraftChange({ ...draft, url: e.target.value })}
-          placeholder="https://api.example.com/{{path}}"
-          className="h-9 flex-1"
-        />
-        <Button variant="primary" className="h-9 px-4" title="Send (Ctrl/Cmd+Enter)">
-          Send
+        <div className="min-w-0 flex-1">
+          <Input
+            mono
+            aria-label="Request URL"
+            value={draft.url}
+            onChange={(e) => onUrlChange(e.target.value)}
+            placeholder="https://api.example.com/{{path}}"
+            className="h-9 w-full"
+            aria-invalid={urlError != null}
+          />
+          <PlaceholderHints
+            text={draft.url}
+            definedKeys={definedKeys}
+            onFixVariable={onFixVariable}
+          />
+          {urlError && <p className="mt-1 text-[0.75rem] text-error">{urlError}</p>}
+        </div>
+        <Button
+          variant="primary"
+          className="h-9 px-4"
+          title="Send (Ctrl/Cmd+Enter)"
+          disabled={sending}
+          onClick={onSend}
+        >
+          {sending ? "Sending…" : "Send"}
         </Button>
       </div>
+
+      {issueSummary && (
+        <p className="border-b border-error-subtle bg-error-subtle px-3 py-1.5 text-[0.75rem] text-error">
+          {issueSummary}
+        </p>
+      )}
 
       <Tabs
         className="px-3"
@@ -62,8 +131,10 @@ export function RequestBuilderPanel({ draft, onDraftChange }: RequestBuilderPane
         {builderTab === "params" && (
           <PairEditor
             pairs={draft.queryParams}
-            onChange={(queryParams) => onDraftChange({ ...draft, queryParams })}
+            onChange={onParamsChange}
             addLabel="Add parameter"
+            definedKeys={definedKeys}
+            onFixVariable={onFixVariable}
           />
         )}
         {builderTab === "headers" && (
@@ -71,6 +142,8 @@ export function RequestBuilderPanel({ draft, onDraftChange }: RequestBuilderPane
             pairs={draft.headers}
             onChange={(headers) => onDraftChange({ ...draft, headers })}
             addLabel="Add header"
+            definedKeys={definedKeys}
+            onFixVariable={onFixVariable}
           />
         )}
         {builderTab === "body" && (
@@ -78,10 +151,24 @@ export function RequestBuilderPanel({ draft, onDraftChange }: RequestBuilderPane
             draft={draft}
             disabled={draft.method === "GET"}
             onDraftChange={onDraftChange}
+            definedKeys={definedKeys}
+            onFixVariable={onFixVariable}
+            bodyError={bodyError}
           />
         )}
-        {builderTab === "auth" && <AuthTab draft={draft} onDraftChange={onDraftChange} />}
+        {builderTab === "auth" && (
+          <AuthTab
+            draft={draft}
+            onDraftChange={onDraftChange}
+            definedKeys={definedKeys}
+            onFixVariable={onFixVariable}
+          />
+        )}
       </div>
     </div>
   );
+}
+
+function firstIssue(issues: ValidationIssue[], field: ValidationIssue["field"]): string | null {
+  return issues.find((issue) => issue.field === field)?.message ?? null;
 }

@@ -20,8 +20,10 @@ export { DEFAULT_HTTP_TIMEOUT_MS } from "./ports/http-client.interface";
 export type { ValidationIssue } from "./application/validate-draft";
 export { validateDraft } from "./application/validate-draft";
 export { prepareRequest, requestSendsBody } from "./application/prepare-request";
+export { syncParamsFromUrl, syncUrlFromParams } from "./application/sync-url-params";
 export type { SendResult } from "./application/request.service";
 export { RequestService } from "./application/request.service";
+
 
 export { FetchHttpClient } from "./infrastructure/network/fetch-http-client";
 export { TauriHttpClient } from "./infrastructure/network/tauri-http-client";

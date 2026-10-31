@@ -1,10 +1,12 @@
 import { Button, SyncStatus } from "@/components";
 import type { SyncStatus as SyncStatusKind } from "@modules/sync";
+import type { SaveState } from "@/app/workspace-state";
 import { cn } from "@/lib/cn";
 
 interface AppHeaderProps {
   requestName: string;
   breadcrumb?: string | null;
+  saveState: SaveState;
   unresolvedCount: number;
   syncStatus: SyncStatusKind;
   signedIn: boolean;
@@ -18,6 +20,7 @@ interface AppHeaderProps {
 export function AppHeader({
   requestName,
   breadcrumb,
+  saveState,
   unresolvedCount,
   syncStatus,
   signedIn,
@@ -38,9 +41,17 @@ export function AppHeader({
         {breadcrumb && (
           <p className="truncate text-[0.75rem] text-text-muted">{breadcrumb}</p>
         )}
-        <h1 className="truncate text-sm font-semibold text-text-primary">
-          {requestName || "Untitled Request"}
-        </h1>
+        <div className="flex min-w-0 items-center gap-2">
+          <h1 className="truncate text-sm font-semibold text-text-primary">
+            {requestName || "Untitled Request"}
+          </h1>
+          {saveState === "unsaved" && (
+            <span className="shrink-0 text-[0.75rem] text-text-muted">Unsaved changes</span>
+          )}
+          {saveState === "saved" && (
+            <span className="shrink-0 text-[0.75rem] text-success">Saved</span>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-2">

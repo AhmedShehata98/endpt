@@ -1,5 +1,6 @@
 import { Button, KeyValueRow } from "@/components";
 import type { KeyValuePair } from "@modules/request";
+import { PlaceholderHints } from "./PlaceholderHints";
 
 function updatePairs(
   pairs: KeyValuePair[],
@@ -13,22 +14,38 @@ interface PairEditorProps {
   pairs: KeyValuePair[];
   onChange: (pairs: KeyValuePair[]) => void;
   addLabel: string;
+  definedKeys: ReadonlySet<string>;
+  onFixVariable: () => void;
 }
 
-export function PairEditor({ pairs, onChange, addLabel }: PairEditorProps) {
+export function PairEditor({
+  pairs,
+  onChange,
+  addLabel,
+  definedKeys,
+  onFixVariable,
+}: PairEditorProps) {
   return (
     <div>
       {pairs.map((pair) => (
-        <KeyValueRow
-          key={pair.id}
-          enabled={pair.enabled}
-          keyName={pair.key}
-          value={pair.value}
-          onEnabledChange={(enabled) => onChange(updatePairs(pairs, pair.id, { enabled }))}
-          onKeyChange={(key) => onChange(updatePairs(pairs, pair.id, { key }))}
-          onValueChange={(value) => onChange(updatePairs(pairs, pair.id, { value }))}
-          onRemove={() => onChange(pairs.filter((row) => row.id !== pair.id))}
-        />
+        <div key={pair.id}>
+          <KeyValueRow
+            enabled={pair.enabled}
+            keyName={pair.key}
+            value={pair.value}
+            onEnabledChange={(enabled) => onChange(updatePairs(pairs, pair.id, { enabled }))}
+            onKeyChange={(key) => onChange(updatePairs(pairs, pair.id, { key }))}
+            onValueChange={(value) => onChange(updatePairs(pairs, pair.id, { value }))}
+            onRemove={() => onChange(pairs.filter((row) => row.id !== pair.id))}
+          />
+          <div className="px-1 pb-1">
+            <PlaceholderHints
+              text={pair.value}
+              definedKeys={definedKeys}
+              onFixVariable={onFixVariable}
+            />
+          </div>
+        </div>
       ))}
       <Button
         variant="ghost"

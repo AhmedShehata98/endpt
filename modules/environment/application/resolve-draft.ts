@@ -1,6 +1,5 @@
 import type { AuthConfig, KeyValuePair, RequestDraft } from "@modules/request";
-
-const PLACEHOLDER = /\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g;
+import { PLACEHOLDER_PATTERN } from "./placeholder";
 
 export interface EnvBinding {
   key: string;
@@ -17,7 +16,7 @@ export function resolveDraft(draft: RequestDraft, variables: readonly EnvBinding
   const unresolved = new Set<string>();
 
   const resolveText = (text: string): string =>
-    text.replace(PLACEHOLDER, (match, key: string) => {
+    text.replace(PLACEHOLDER_PATTERN, (match, key: string) => {
       const value = values.get(key);
       if (value === undefined) {
         unresolved.add(key);

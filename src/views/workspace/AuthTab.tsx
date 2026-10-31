@@ -1,12 +1,20 @@
 import { Input, SecretInput, Select } from "@/components";
 import type { AuthType, RequestDraft } from "@modules/request";
+import { PlaceholderHints } from "./PlaceholderHints";
 
 interface AuthTabProps {
   draft: RequestDraft;
   onDraftChange: (draft: RequestDraft) => void;
+  definedKeys: ReadonlySet<string>;
+  onFixVariable: () => void;
 }
 
-export function AuthTab({ draft, onDraftChange }: AuthTabProps) {
+export function AuthTab({
+  draft,
+  onDraftChange,
+  definedKeys,
+  onFixVariable,
+}: AuthTabProps) {
   return (
     <div className="space-y-3 p-1">
       <label className="flex items-center gap-2 text-[0.8125rem] text-text-secondary">
@@ -40,14 +48,21 @@ export function AuthTab({ draft, onDraftChange }: AuthTabProps) {
             <option value="basic">Username / password</option>
           </Select>
           {draft.auth.type === "bearerToken" && (
-            <SecretInput
-              aria-label="Token"
-              value={draft.auth.token ?? ""}
-              onChange={(token) =>
-                onDraftChange({ ...draft, auth: { ...draft.auth, token } })
-              }
-              placeholder="{{authToken}}"
-            />
+            <div>
+              <SecretInput
+                aria-label="Token"
+                value={draft.auth.token ?? ""}
+                onChange={(token) =>
+                  onDraftChange({ ...draft, auth: { ...draft.auth, token } })
+                }
+                placeholder="{{authToken}}"
+              />
+              <PlaceholderHints
+                text={draft.auth.token ?? ""}
+                definedKeys={definedKeys}
+                onFixVariable={onFixVariable}
+              />
+            </div>
           )}
           {draft.auth.type === "apiKey" && (
             <div className="grid gap-2">
@@ -62,37 +77,58 @@ export function AuthTab({ draft, onDraftChange }: AuthTabProps) {
                 }
                 placeholder="X-API-Key"
               />
-              <SecretInput
-                aria-label="API key"
-                value={draft.auth.apiKey ?? ""}
-                onChange={(apiKey) =>
-                  onDraftChange({ ...draft, auth: { ...draft.auth, apiKey } })
-                }
-                placeholder="{{apiKey}}"
-              />
+              <div>
+                <SecretInput
+                  aria-label="API key"
+                  value={draft.auth.apiKey ?? ""}
+                  onChange={(apiKey) =>
+                    onDraftChange({ ...draft, auth: { ...draft.auth, apiKey } })
+                  }
+                  placeholder="{{apiKey}}"
+                />
+                <PlaceholderHints
+                  text={draft.auth.apiKey ?? ""}
+                  definedKeys={definedKeys}
+                  onFixVariable={onFixVariable}
+                />
+              </div>
             </div>
           )}
           {draft.auth.type === "basic" && (
             <div className="grid gap-2">
-              <Input
-                aria-label="Username"
-                value={draft.auth.username ?? ""}
-                onChange={(e) =>
-                  onDraftChange({
-                    ...draft,
-                    auth: { ...draft.auth, username: e.target.value },
-                  })
-                }
-                placeholder="{{username}}"
-              />
-              <SecretInput
-                aria-label="Password"
-                value={draft.auth.password ?? ""}
-                onChange={(password) =>
-                  onDraftChange({ ...draft, auth: { ...draft.auth, password } })
-                }
-                placeholder="{{password}}"
-              />
+              <div>
+                <Input
+                  aria-label="Username"
+                  value={draft.auth.username ?? ""}
+                  onChange={(e) =>
+                    onDraftChange({
+                      ...draft,
+                      auth: { ...draft.auth, username: e.target.value },
+                    })
+                  }
+                  placeholder="{{username}}"
+                />
+                <PlaceholderHints
+                  text={draft.auth.username ?? ""}
+                  definedKeys={definedKeys}
+                  onFixVariable={onFixVariable}
+                />
+              </div>
+              <div>
+                <SecretInput
+                  aria-label="Password"
+                  value={draft.auth.password ?? ""}
+                  onChange={(password) =>
+                    onDraftChange({ ...draft, auth: { ...draft.auth, password } })
+                  }
+                  placeholder="{{password}}"
+                />
+                <PlaceholderHints
+                  text={draft.auth.password ?? ""}
+                  definedKeys={definedKeys}
+                  onFixVariable={onFixVariable}
+                />
+              </div>
             </div>
           )}
         </>
