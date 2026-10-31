@@ -102,6 +102,7 @@ export function RequestBuilderPanel({
           variant="primary"
           className="h-9 px-4"
           title="Send (Ctrl/Cmd+Enter)"
+          aria-label={sending ? "Sending" : "Send"}
           disabled={sending}
           onClick={onSend}
         >

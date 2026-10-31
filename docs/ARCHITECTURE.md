@@ -304,7 +304,7 @@ Log enough to diagnose send failures (method, host, timing, error category). Exc
 Local-first desktop usage; scale by keeping modules and ports replaceable (e.g. native HTTP adapter) rather than by splitting into services.
 
 ### Resource Management
-Cancel or ignore stale in-flight requests when the user sends again; avoid unbounded response buffering in the UI thread.
+Ignore results from stale in-flight sends when the user sends again (`RequestService` send token). UI v1.0 has no Cancel button (Send is disabled while in flight). Avoid unbounded response buffering on the UI thread.
 
 ---
 
@@ -426,7 +426,8 @@ See also [ADR-005](./adr/ADR-005-local-persistence.md) (SQLite) and [ADR-006](./
 
 - ~~When to introduce a native desktop HTTP Infrastructure adapter vs continuing with `FetchHttpClient` in the Tauri webview.~~ — **Resolved:** production uses `TauriHttpClient` (`tauri-plugin-http`) behind `HttpClient`. `FetchHttpClient` stays for tests and non-desktop runs.
 - ~~Exact local persistence technology (SQLite vs Tauri store)~~ — **Resolved:** SQLite via `@tauri-apps/plugin-sql` ([ADR-005](./adr/ADR-005-local-persistence.md)).
-- Align [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) Phase 2 wording with this document’s port + adapter model (desktop-safe HTTP as an alternative adapter, not a contradiction of the `HttpClient` port).
+- ~~Align IMPLEMENTATION_PLAN Phase 2 with the port + adapter model~~ — **Resolved:** plan §4.1 matches this document.
+- HTTP capability scopes for arbitrary APIs — see [ADR-007](./adr/ADR-007-http-capability-scope.md).
 
 ---
 

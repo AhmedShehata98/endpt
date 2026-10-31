@@ -52,28 +52,32 @@ export function EnvironmentVariablesEditor({
               Encrypted on device. Synced only when sync is enabled.
             </p>
           </div>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onAddVariable}
-            disabled={addDisabled}
-          >
-            Add variable
-          </Button>
+          {variables.length > 0 ? (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={onAddVariable}
+              disabled={addDisabled}
+            >
+              Add variable
+            </Button>
+          ) : null}
         </div>
       ) : (
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border-default px-3 py-2">
           <p className="text-[0.75rem] text-text-muted">
             Encrypted on device. Synced only when sync is enabled.
           </p>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onAddVariable}
-            disabled={addDisabled}
-          >
-            Add variable
-          </Button>
+          {variables.length > 0 ? (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={onAddVariable}
+              disabled={addDisabled}
+            >
+              Add variable
+            </Button>
+          ) : null}
         </div>
       )}
 

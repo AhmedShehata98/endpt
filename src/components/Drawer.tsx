@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "./Button";
 import { cn } from "@/lib/cn";
 
@@ -19,12 +19,15 @@ export function Drawer({
   footer,
   className,
 }: DrawerProps) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
+    closeRef.current?.focus();
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
@@ -49,7 +52,13 @@ export function Drawer({
       >
         <div className="flex h-12 shrink-0 items-center justify-between border-b border-border-default px-3">
           <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
-          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close drawer">
+          <Button
+            ref={closeRef}
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            aria-label="Close drawer"
+          >
             ×
           </Button>
         </div>

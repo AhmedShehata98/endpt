@@ -138,6 +138,7 @@ export function SettingsView({
                 <input
                   type="checkbox"
                   checked={preferences.syncEnabled}
+                  aria-label="Enable cloud sync"
                   onChange={(e) => onPreferencesChange({ syncEnabled: e.target.checked })}
                   className="size-3.5 accent-accent"
                 />
@@ -161,7 +162,10 @@ export function SettingsView({
         </Section>
 
         <Section title="About">
-          <p className="text-[0.8125rem] text-text-secondary">Endpt v0.1.0 — desktop API client</p>
+          <p className="text-[0.8125rem] text-text-secondary">
+            Endpt v1.0.0 — lightweight desktop API client for testing and integrating with
+            HTTP endpoints
+          </p>
         </Section>
       </div>
     </div>

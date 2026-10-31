@@ -9,6 +9,7 @@ import {
   type AppRepositories,
 } from "@modules/persistence";
 import {
+  FakeSyncRemote,
   SyncService,
   createDefaultSyncRemote,
   createSyncKeyStore,
@@ -17,9 +18,16 @@ import {
 
 let reposPromise: Promise<AppRepositories> | null = null;
 
+/** True when Playwright drives the Vite app (`VITE_E2E=1`). */
+export function isE2eMode(): boolean {
+  return import.meta.env.VITE_E2E === "1";
+}
+
 export function getAppRepositories(): Promise<AppRepositories> {
   if (!reposPromise) {
-    reposPromise = createAppRepositories();
+    reposPromise = isE2eMode()
+      ? Promise.resolve(createMemoryRepositories())
+      : createAppRepositories();
   }
   return reposPromise;
 }
@@ -30,7 +38,7 @@ export function resetAppRepositoriesForTests(repos?: AppRepositories): void {
 }
 
 export function createRequestService(): RequestService {
-  const http = isTauri() ? new TauriHttpClient() : new FetchHttpClient();
+  const http = isTauri() && !isE2eMode() ? new TauriHttpClient() : new FetchHttpClient();
   return new RequestService(http);
 }
 
@@ -49,10 +57,12 @@ export function createProjectService(repos: AppRepositories): ProjectService {
 
 export function createSyncService(
   repos: AppRepositories,
-  remote: SyncRemote = createDefaultSyncRemote(),
+  remote?: SyncRemote,
 ): SyncService {
+  const resolved =
+    remote ?? (isE2eMode() ? new FakeSyncRemote() : createDefaultSyncRemote());
   return new SyncService(
-    remote,
+    resolved,
     createSyncKeyStore(),
     repos.userAccounts,
     repos.sessions,

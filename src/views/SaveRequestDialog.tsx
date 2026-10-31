@@ -177,6 +177,7 @@ function SaveRequestDialogBody({
               value={name}
               onChange={(e) => setName(e.target.value)}
               invalid={Boolean(error) && !name.trim()}
+              aria-label="Request name"
               autoFocus
             />
           </label>

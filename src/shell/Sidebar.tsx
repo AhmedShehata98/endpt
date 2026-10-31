@@ -50,6 +50,8 @@ export function Sidebar({ activeView, collapsed, onNavigate, onNewRequest }: Sid
               key={item.id}
               type="button"
               title={item.label}
+              aria-label={item.label}
+              aria-current={active ? "page" : undefined}
               onClick={() => onNavigate(item.id)}
               className={cn(
                 "flex h-8 items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium transition-colors",
@@ -72,6 +74,8 @@ export function Sidebar({ activeView, collapsed, onNavigate, onNewRequest }: Sid
         <button
           type="button"
           title="Settings"
+          aria-label="Settings"
+          aria-current={activeView === "settings" ? "page" : undefined}
           onClick={() => onNavigate("settings")}
           className={cn(
             "flex h-8 w-full items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium transition-colors",

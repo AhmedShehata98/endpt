@@ -383,7 +383,7 @@ No variables, populated, validation error, secret masked and revealed, unsaved c
 
 ### Signed-out behavior
 
-Account section shows Sign in and Sign up. Sync is disabled with the note "Sign in to enable cloud sync". Whether non-account preferences persist for guests is an open decision (see 16).
+Account section shows Sign in and Sign up. Sync is disabled with the note "Sign in to enable cloud sync". Guests may tweak theme/method/wrap in-session only; preferences are not persisted (open decision #2 resolved).
 
 ---
 
@@ -677,16 +677,16 @@ For each interactive component, document default, hover, focus, disabled, loadin
 
 ## 18. Open Decisions
 
-| # | Decision | Default assumption |
+| # | Decision | Status |
 |--:|---|---|
-| 1 | Does the body editor allow DELETE? | Yes. Only GET is disabled |
-| 2 | Do guests persist theme and other preferences? | Guests use defaults; persistence needs an account |
-| 3 | Are saved requests autosaved or explicitly saved? | Explicit **Save Request** only |
-| 4 | Are custom variable keys beyond the five roles allowed? | No (PRD roles first), unless placeholder resolution requires it |
-| 5 | Response size threshold for the "Rendering…" indicator | Set after profiling |
-| 6 | Export of sensitive data | Not applicable (no export in MVP) |
+| 1 | Does the body editor allow DELETE? | **Resolved:** Yes. Only GET is disabled |
+| 2 | Do guests persist theme and other preferences? | **Resolved:** Guests use defaults; in-session tweaks allowed, never persisted |
+| 3 | Are saved requests autosaved or explicitly saved? | **Resolved:** Explicit **Save Request** only; in-place update when already bound |
+| 4 | Are custom variable keys beyond the five roles allowed? | **Resolved:** No (five PRD roles only) |
+| 5 | Response size threshold for the "Rendering…" indicator | **Resolved:** 50 000 characters (`useFormattedBody`) |
+| 6 | Export of sensitive data | **Resolved:** Not applicable (no export in MVP) |
 
-Resolve these with the PRD owner before implementing the affected UI. Do not render a control for a capability the engine or persistence layer does not support.
+Do not render a control for a capability the engine or persistence layer does not support.
 
 ---
 

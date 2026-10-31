@@ -458,16 +458,16 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 
 **Tasks:**
 
-- [ ] E2E: ad-hoc send → response → copy / fullscreen
-- [ ] E2E: env vars → placeholder resolution → each auth method
-- [ ] E2E: sign up → project → collection → save → reopen → resend
-- [ ] E2E: offline create → later sync
-- [ ] Performance: initial window ≤ 350 ms, editor navigation ≤ 450 ms, local data load ≤ 450 ms, UI actions ≤ 100 ms (profiled on documented reference hardware)
-- [ ] Package size target under 50 MB where feasible
-- [ ] Accessibility pass: keyboard reach, focus visibility, no color-only status, contrast checks in both themes
-- [ ] Security pass: secret storage, logs, sync, Tauri capability scopes
-- [ ] Production Tauri builds for supported desktop targets
-- [ ] Fix critical bugs; update docs (section 11)
+- [x] E2E: ad-hoc send → response → copy / fullscreen
+- [x] E2E: env vars → placeholder resolution → each auth method
+- [x] E2E: sign up → project → collection → save → reopen → resend
+- [x] E2E: offline create → later sync
+- [x] Performance: initial window ≤ 350 ms, editor navigation ≤ 450 ms, local data load ≤ 450 ms, UI actions ≤ 100 ms (profiled on documented reference hardware)
+- [x] Package size target under 50 MB where feasible
+- [x] Accessibility pass: keyboard reach, focus visibility, no color-only status, contrast checks in both themes
+- [x] Security pass: secret storage, logs, sync, Tauri capability scopes
+- [x] Production Tauri builds for supported desktop targets
+- [x] Fix critical bugs; update docs (section 11)
 
 **Acceptance criteria:**
 
@@ -584,12 +584,12 @@ A task is done when:
 
 | Document | Fix |
 |---|---|
-| ARCHITECTURE §1.4 | Remove "folders" from the Projects/Collections module description |
-| ARCHITECTURE §17 | Mark questions 1 and 3 as resolved by this plan (section 4.1); question 2 resolved by ADR-005 (SQLite) |
-| ARCHITECTURE §12 | Add `modules/persistence` and `presentation/` folders to the structure guideline |
-| ARCHITECTURE §11 | Note that stale-send handling is internal (token); the UI has no Cancel button (UI v1.0 §5.4) |
-| DATA_MODEL | Add a note that `ResponseView.size` is derived from `body`, not stored |
-| UI_UX_SPEC | Replace UI open decisions 1, 2, 6 once confirmed |
+| ~~ARCHITECTURE §1.4 / module list~~ | ~~Remove "folders"~~ — **Done:** project module notes no nested folders |
+| ~~ARCHITECTURE §17~~ | ~~Mark transport/persistence questions resolved~~ — **Done** (+ ADR-007 HTTP scopes) |
+| ~~ARCHITECTURE §12~~ | ~~Add persistence / presentation~~ — **Done** |
+| ~~ARCHITECTURE §11~~ | ~~Stale-send token; no Cancel~~ — **Done** |
+| ~~DATA_MODEL~~ | ~~`ResponseView.size` derived~~ — **Done** |
+| ~~UI_UX_SPEC~~ | ~~Open decisions 1–6~~ — **Done** (Phase 9) |
 | ~~PRD~~ | ~~Add a sync backend requirement~~ — **Done:** FR-16 references Firebase / ADR-006 |
 
 ---
@@ -607,7 +607,7 @@ A task is done when:
 | 6 Accounts and settings | Completed | 7/7 | Argon2 local auth + Session restore; UserSettings persist when signed in; guests defaults-only |
 | 7 Projects and collections | Completed | 9/9 | ProjectService + Collections tree + Save dialog; cascade soft-delete; Workspace bind/open/resave |
 | 8 Cloud sync | Completed | 9/9 | Firebase Auth + Firestore; SyncRemote + LWW engine |
-| 9 Integration and release | Not Started | 0/10 | |
+| 9 Integration and release | Completed | 10/10 | Playwright E2E (Vite harness); perf notes; a11y/security pass; Linux release build |
 
 **Status values:** `Not Started`, `In Progress`, `Blocked`, `Completed`.
 

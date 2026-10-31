@@ -169,18 +169,25 @@ function ResponsePanelContent({
             <input
               type="checkbox"
               checked={wrapLines}
+              aria-label="Wrap response lines"
               onChange={(e) => onWrapLinesChange(e.target.checked)}
               className="size-3.5 accent-accent"
             />
             Wrap lines
           </label>
-          <Button variant="ghost" size="sm" onClick={() => void copyBody()}>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="Copy response body"
+            onClick={() => void copyBody()}
+          >
             Copy
           </Button>
           <Button
             ref={fullscreenTriggerRef}
             variant="ghost"
             size="sm"
+            aria-label="Open response fullscreen"
             onClick={onOpenFullscreen}
           >
             Fullscreen

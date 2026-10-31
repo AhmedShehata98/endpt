@@ -21,6 +21,7 @@ export function AuthTab({
         <input
           type="checkbox"
           checked={draft.auth.enabled}
+          aria-label="Enable authentication"
           onChange={(e) =>
             onDraftChange({
               ...draft,

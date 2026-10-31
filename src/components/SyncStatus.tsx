@@ -31,6 +31,8 @@ export function SyncStatus({ status, onRetry, className }: SyncStatusProps) {
         className,
       )}
       title={labels[status]}
+      role="status"
+      aria-label={`Sync status: ${labels[status]}`}
     >
       <span className={cn("size-1.5 rounded-full", dots[status])} aria-hidden />
       <span>{labels[status]}</span>

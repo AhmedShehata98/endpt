@@ -55,7 +55,12 @@ export function AppHeader({
           {saveState === "saved" && (
             <span className="shrink-0 text-[0.75rem] text-success">Saved</span>
           )}
-          <Button variant="secondary" size="sm" onClick={onSaveRequest}>
+          <Button
+            variant="secondary"
+            size="sm"
+            aria-label="Save Request"
+            onClick={onSaveRequest}
+          >
             Save Request
           </Button>
         </div>

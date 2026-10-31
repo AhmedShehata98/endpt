@@ -1,7 +1,7 @@
 [package]
 name = "endpt"
-version = "0.1.0"
-description = "A Tauri App"
+version = "1.0.0"
+description = "Lightweight desktop API client for testing and integrating with HTTP endpoints with minimal setup"
 authors = ["you"]
 edition = "2024"
 
