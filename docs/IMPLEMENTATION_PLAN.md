@@ -402,15 +402,15 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 
 **Tasks:**
 
-- [ ] **Collections** view: tree of Project → Collection → Request with expand/collapse; rows show request name and method label
-- [ ] Create, rename, delete for projects and collections via dialogs
-- [ ] **Save Request** dialog: name, project, collection (create inline if needed)
-- [ ] Save an ad-hoc draft by copying it into a `SavedRequest`; the ad-hoc draft stays editable
-- [ ] Open a saved request in the Workspace; edit and resend (AC-19)
-- [ ] Rename and delete saved requests
-- [ ] Cascade soft-delete with confirmation that states exactly what is deleted
-- [ ] Signed-out state: sign-in prompt in Collections and the Save dialog; Workspace never blocked
-- [ ] Respect `sortOrder`; virtualize long trees
+- [x] **Collections** view: tree of Project → Collection → Request with expand/collapse; rows show request name and method label
+- [x] Create, rename, delete for projects and collections via dialogs
+- [x] **Save Request** dialog: name, project, collection (create inline if needed)
+- [x] Save an ad-hoc draft by copying it into a `SavedRequest`; the ad-hoc draft stays editable
+- [x] Open a saved request in the Workspace; edit and resend (AC-19)
+- [x] Rename and delete saved requests
+- [x] Cascade soft-delete with confirmation that states exactly what is deleted
+- [x] Signed-out state: sign-in prompt in Collections and the Save dialog; Workspace never blocked
+- [x] Respect `sortOrder`; virtualize long trees
 
 **Acceptance criteria:**
 
@@ -548,7 +548,7 @@ After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environm
 | 3 | Local store (SQLite vs Tauri store) | ~~Phase 1~~ | **Resolved:** SQLite ([ADR-005](./adr/ADR-005-local-persistence.md)) |
 | 4 | Body editor allowed for DELETE? | Phase 2–3 | Yes; only GET is disabled |
 | 5 | Do guests persist preferences? | ~~Phase 6~~ | **Resolved:** No; in-session tweaks allowed, never persisted; relaunch uses defaults |
-| 6 | Saved requests: explicit save or autosave | Phase 7 | Explicit **Save Request** only |
+| 6 | Saved requests: explicit save or autosave | ~~Phase 7~~ | **Resolved:** Explicit **Save Request** only; in-place update when already bound |
 | 7 | Custom variable keys beyond the five roles | Phase 5 | Not allowed |
 
 ### Risks
@@ -605,7 +605,7 @@ A task is done when:
 | 4 Response viewer | Completed | 10/10 | CodeMirror 6 + prettify; copy uses raw body; fullscreen focus restore |
 | 5 Environment variables | Completed | 9/9 | Shared editor + Variables drawer draft/Apply; Fix variable Flow B |
 | 6 Accounts and settings | Completed | 7/7 | Argon2 local auth + Session restore; UserSettings persist when signed in; guests defaults-only |
-| 7 Projects and collections | Not Started | 0/9 | |
+| 7 Projects and collections | Completed | 9/9 | ProjectService + Collections tree + Save dialog; cascade soft-delete; Workspace bind/open/resave |
 | 8 Cloud sync | Not Started | 0/9 | Blocked on sync backend decision |
 | 9 Integration and release | Not Started | 0/10 | |
 

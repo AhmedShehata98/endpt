@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AccountService } from "@modules/account";
+import type { ProjectService } from "@modules/project";
 import type { AppRepositories } from "@modules/persistence";
 import type { SyncStatus } from "@modules/sync";
-import { createAccountService, getAppRepositories } from "@/app/composition";
+import {
+  createAccountService,
+  createProjectService,
+  getAppRepositories,
+} from "@/app/composition";
 import { isAuthView, type AppView } from "@/app/navigation";
 import { Toast } from "@/components/Toast";
 import { useCollapsedSidebar } from "@/hooks/useCollapsedSidebar";
 import { useEnvironmentVariables } from "@/hooks/useEnvironmentVariables";
+import { useProjects } from "@/hooks/useProjects";
 import { useSession } from "@/hooks/useSession";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWorkspaceDraft } from "@/hooks/useWorkspaceDraft";
@@ -16,6 +22,7 @@ import { Sidebar } from "@/shell/Sidebar";
 import { CollectionsView } from "@/views/CollectionsView";
 import { EnvironmentView } from "@/views/EnvironmentView";
 import { ResponseFullscreen } from "@/views/ResponseFullscreen";
+import { SaveRequestDialog } from "@/views/SaveRequestDialog";
 import { SettingsView } from "@/views/SettingsView";
 import { SignInView } from "@/views/SignInView";
 import { SignUpView } from "@/views/SignUpView";
@@ -27,12 +34,15 @@ const PHASE0_SYNC_STATUS: SyncStatus = "local-only";
 export default function App() {
   const [repos, setRepos] = useState<AppRepositories | null>(null);
   const [accountService, setAccountService] = useState<AccountService | null>(null);
+  const [projectService, setProjectService] = useState<ProjectService | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [persistError, setPersistError] = useState<string | null>(null);
   const [copyToast, setCopyToast] = useState<string | null>(null);
+  const [saveToast, setSaveToast] = useState<string | null>(null);
   const [view, setView] = useState<AppView>("workspace");
   const [variablesOpen, setVariablesOpen] = useState(false);
   const [variablesFocusKey, setVariablesFocusKey] = useState<string | null>(null);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const fullscreenTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -54,16 +64,27 @@ export default function App() {
     setDraft,
     startNewRequest,
     openSavedRequest,
+    bindSavedRequest,
+    persistSavedIfBound,
+    activeSavedRequestId,
+    breadcrumb,
     ready: draftReady,
     saveState,
   } = useWorkspaceDraft({
     defaultMethod: preferences.defaultHttpMethod,
     repository: repos?.adHocRequests ?? null,
+    projectService,
     onPersistError,
   });
   const { variables, setVariables, ready: envReady } = useEnvironmentVariables({
     repository: repos?.environmentVariables ?? null,
     onPersistError,
+  });
+  const projects = useProjects({
+    service: projectService,
+    signedIn: session.signedIn,
+    userId: session.account?.id ?? null,
+    onError: onPersistError,
   });
   const {
     send,
@@ -87,6 +108,7 @@ export default function App() {
         if (cancelled) return;
         setRepos(created);
         setAccountService(createAccountService(created));
+        setProjectService(createProjectService(created));
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -110,6 +132,12 @@ export default function App() {
     const timer = window.setTimeout(() => setCopyToast(null), 2000);
     return () => window.clearTimeout(timer);
   }, [copyToast]);
+
+  useEffect(() => {
+    if (!saveToast) return;
+    const timer = window.setTimeout(() => setSaveToast(null), 2000);
+    return () => window.clearTimeout(timer);
+  }, [saveToast]);
 
   const goWorkspace = useCallback(() => {
     setView("workspace");
@@ -180,6 +208,29 @@ export default function App() {
     void session.signOut();
   }, [session]);
 
+  const handleSaveRequestClick = useCallback(() => {
+    if (!storageReady) return;
+    if (activeSavedRequestId) {
+      void persistSavedIfBound().then((ok) => {
+        if (ok) setSaveToast("Request saved");
+      });
+      return;
+    }
+    setSaveDialogOpen(true);
+  }, [activeSavedRequestId, persistSavedIfBound, storageReady]);
+
+  const handleSaveDialogSave = useCallback(
+    async (collectionId: string, name: string) => {
+      const result = await projects.saveRequest(collectionId, draft, name);
+      if (result?.status === "ok" && result.request) {
+        await bindSavedRequest(result.request);
+        setSaveToast("Request saved");
+      }
+      return result;
+    },
+    [bindSavedRequest, draft, projects],
+  );
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const meta = event.metaKey || event.ctrlKey;
@@ -245,12 +296,13 @@ export default function App() {
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader
           requestName={draft.name ?? "Untitled Request"}
-          breadcrumb={null}
+          breadcrumb={breadcrumb}
           saveState={saveState}
           unresolvedCount={unresolvedCount}
           syncStatus={PHASE0_SYNC_STATUS}
           signedIn={headerSignedIn}
           displayName={session.displayName}
+          onSaveRequest={handleSaveRequestClick}
           onOpenVariables={openVariables}
           onSignIn={() => {
             session.setError(null);
@@ -289,14 +341,27 @@ export default function App() {
               {view === "collections" && (
                 <CollectionsView
                   signedIn={session.signedIn}
+                  tree={projects.tree}
+                  ready={projects.ready}
+                  busy={projects.busy}
                   onSignIn={() => {
                     session.setError(null);
                     setView("sign-in");
                   }}
-                  onOpenRequest={(name, method) => {
-                    openSavedRequest(name, method);
-                    goWorkspace();
+                  onOpenRequest={(id) => {
+                    void openSavedRequest(id).then((ok) => {
+                      if (ok) goWorkspace();
+                    });
                   }}
+                  onCreateProject={projects.createProject}
+                  onRenameProject={projects.renameProject}
+                  onDeleteProject={projects.deleteProject}
+                  onCreateCollection={projects.createCollection}
+                  onRenameCollection={projects.renameCollection}
+                  onDeleteCollection={projects.deleteCollection}
+                  onRenameRequest={projects.renameSavedRequest}
+                  onDeleteRequest={projects.deleteSavedRequest}
+                  onCountCascade={projects.countCascade}
                 />
               )}
               {view === "environment" && (
@@ -334,6 +399,23 @@ export default function App() {
         onClose={closeVariables}
       />
 
+      <SaveRequestDialog
+        open={saveDialogOpen}
+        signedIn={session.signedIn}
+        draft={draft}
+        tree={projects.tree}
+        busy={projects.busy}
+        onClose={() => setSaveDialogOpen(false)}
+        onSignIn={() => {
+          setSaveDialogOpen(false);
+          session.setError(null);
+          setView("sign-in");
+        }}
+        onCreateProject={projects.createProject}
+        onCreateCollection={projects.createCollection}
+        onSave={handleSaveDialogSave}
+      />
+
       {responseForView && (
         <ResponseFullscreen
           open={fullscreenOpen}
@@ -345,7 +427,7 @@ export default function App() {
         />
       )}
 
-      {persistError || copyToast ? (
+      {persistError || copyToast || saveToast ? (
         <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2">
           {persistError ? <Toast message={persistError} tone="error" /> : null}
           {copyToast ? (
@@ -354,6 +436,7 @@ export default function App() {
               tone={copyToast === "Copied" ? "success" : "error"}
             />
           ) : null}
+          {saveToast ? <Toast message={saveToast} tone="success" /> : null}
         </div>
       ) : null}
     </div>

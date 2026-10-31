@@ -11,6 +11,7 @@ interface AppHeaderProps {
   syncStatus: SyncStatusKind;
   signedIn: boolean;
   displayName?: string | null;
+  onSaveRequest: () => void;
   onOpenVariables: () => void;
   onSignIn: () => void;
   onSignOut: () => void;
@@ -25,6 +26,7 @@ export function AppHeader({
   syncStatus,
   signedIn,
   displayName,
+  onSaveRequest,
   onOpenVariables,
   onSignIn,
   onSignOut,
@@ -51,6 +53,9 @@ export function AppHeader({
           {saveState === "saved" && (
             <span className="shrink-0 text-[0.75rem] text-success">Saved</span>
           )}
+          <Button variant="secondary" size="sm" onClick={onSaveRequest}>
+            Save Request
+          </Button>
         </div>
       </div>
 

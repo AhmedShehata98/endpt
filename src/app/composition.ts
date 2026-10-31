@@ -1,5 +1,6 @@
 import { isTauri } from "@tauri-apps/api/core";
 import { AccountService } from "@modules/account";
+import { ProjectService } from "@modules/project";
 import { FetchHttpClient, RequestService, TauriHttpClient } from "@modules/request";
 import {
   createAppRepositories,
@@ -34,4 +35,8 @@ export function createAccountService(repos: AppRepositories): AccountService {
     repos.userSettings,
     createPasswordHasher(),
   );
+}
+
+export function createProjectService(repos: AppRepositories): ProjectService {
+  return new ProjectService(repos.projects, repos.collections, repos.savedRequests);
 }
