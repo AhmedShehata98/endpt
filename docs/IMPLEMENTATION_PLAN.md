@@ -1,12 +1,12 @@
 # Implementation Plan — Endpt
 
 **Status:** Active
-**Version:** 2.0 (aligned with UI/UX Spec v2.0 and ARCHITECTURE.md)
-**Last checked:** 2026-10-30
+**Version:** 1.0
+**Last checked:** 2026-10-31
 **Source of truth:** [PRD.md](./PRD.md)
-**Supporting docs:** [ARCHITECTURE.md](./ARCHITECTURE.md), [DATA_MODEL.md](./DATA_MODEL.md), [UI_UX_SPEC.md](./UI_UX_SPEC.md) (v2.0)
+**Supporting docs:** [ARCHITECTURE.md](./ARCHITECTURE.md), [DATA_MODEL.md](./DATA_MODEL.md), [UI_UX_SPEC.md](./UI_UX_SPEC.md) (v1.0)
 
-> Rule: if any document conflicts with the PRD, the PRD wins. Do not build anything listed in section 8 (Out of Scope).
+> Rule: if any document conflicts with the PRD, the PRD wins. Do not build anything listed in section 7 (Out of Scope).
 
 ---
 
@@ -23,28 +23,11 @@
 - Local-first storage with optional cloud sync
 - Project → Collection → Request organization
 
-**UI surface (UI/UX Spec v2.0):** 4 views (Workspace, Collections, Environment, Settings), 2 auth screens (Sign In, Sign Up), and overlays (Response fullscreen, Save Request dialog, Variables drawer, create/rename/delete dialogs).
+**UI surface (UI/UX Spec v1.0):** 4 views (Workspace, Collections, Environment, Settings), 2 auth screens (Sign In, Sign Up), and overlays (Response fullscreen, Save Request dialog, Variables drawer, create/rename/delete dialogs).
 
 ---
 
-## 2. What Changed from v1.1
-
-| Area | v1.1 | v2.0 |
-|---|---|---|
-| Phase order | Projects (6) before Accounts (7) | **Accounts before Projects**: projects require a signed-in user (AC-17) |
-| Request engine | "Tauri/desktop-safe HTTP, not browser fetch" | **`HttpClient` port** with injectable adapters (ARCHITECTURE ADR-002) |
-| Env resolver | Built inside Phase 2 and Phase 5 UI | Pure resolver in Phase 2; UI in Phase 5 |
-| Persistence | Part of each module | **Ports in owning modules, adapters in `modules/persistence`** |
-| UI scope | Generic "UI" tasks | Tasks mapped to UI/UX Spec v2.0 sections and `UX-*` criteria |
-| Header status | Not planned | **Sync/offline indicator** (UI §4.2) |
-| Folders | Mentioned in ARCHITECTURE | **Dropped** (not in PRD or DATA_MODEL) |
-| Sync backend | Assumed | **Flagged as an open decision** blocking Phase 8 |
-| Performance | PRD targets only | PRD targets plus ARCHITECTURE targets (350 / 450 / 450 ms) |
-| Docs | Not tracked | **Doc alignment fixes** listed in section 12 |
-
----
-
-## 3. Implementation Principles
+## 2. Implementation Principles
 
 - **PRD first:** Prefer PRD + DATA_MODEL over UI_UX_SPEC and ARCHITECTURE where they conflict.
 - **KISS:** No Domain Layer, no DI framework (ADR-003, ADR-004). Add folders only when a file needs them.
@@ -60,7 +43,7 @@
 
 ---
 
-## 4. Module Map and Project Structure
+## 3. Module Map and Project Structure
 
 Aligned with DATA_MODEL §8 and ARCHITECTURE §12. Create only the folders you need.
 
@@ -98,9 +81,9 @@ Each module owns repository **ports** in its own `ports/` folder. Concrete stora
 
 ---
 
-## 5. Key Technical Decisions
+## 4. Key Technical Decisions
 
-### 5.1 HTTP transport (resolves ARCHITECTURE §17, question 1 and 3)
+### 4.1 HTTP transport (resolves ARCHITECTURE §17, question 1 and 3)
 
 The Application layer depends on the `HttpClient` port. Adapters are injected at the composition root.
 
@@ -164,7 +147,7 @@ export class RequestService {
 | Tauri HTTP plugin adapter | Bypasses CORS, native TLS, still behind the port | Needs capability scopes; verify response-body handling |
 | Both, via the port | Best of each, fully testable | One more adapter to maintain |
 
-### 5.2 Local persistence (resolves ARCHITECTURE §17, question 2)
+### 4.2 Local persistence (resolves ARCHITECTURE §17, question 2)
 
 | Option | Pros | Cons |
 |---|---|---|
@@ -173,14 +156,14 @@ export class RequestService {
 
 **Decision (Phase 1 spike to confirm):** SQLite for projects, collections, saved requests, env vars, and settings. The ad-hoc draft may live in the same database as one row. Repositories sit behind ports so the choice can change.
 
-### 5.3 Secrets at rest
+### 4.3 Secrets at rest
 
 - Field-level encryption for env values and auth fields (`password`, `token`, `apiKey`).
 - Store the encryption key in the OS keychain (accessed through a Rust command), never next to the database.
 - Local password auth stores a one-way hash only (Argon2 in Rust). Plaintext credentials never sync.
 - Logs record method, host, timing, and error category only.
 
-### 5.4 Response rendering
+### 4.4 Response rendering
 
 - Use a read-only **CodeMirror 6** view for response bodies and the fullscreen modal: it virtualizes by viewport, supports JSON and HTML highlighting, and keeps the DOM small for large payloads.
 - HTML is shown as highlighted source and never executed.
@@ -195,11 +178,11 @@ export class RequestService {
 
 Load language packs lazily so startup stays under the 350 ms target.
 
-### 5.5 Stale sends
+### 4.5 Stale sends
 
-UI v2.0 disables **Send** while a request is in flight and has no Cancel button. `RequestService` still tags each send with a token and ignores results from superseded sends, which covers ARCHITECTURE §11 without adding cancel UI.
+UI v1.0 disables **Send** while a request is in flight and has no Cancel button. `RequestService` still tags each send with a token and ignores results from superseded sends, which covers ARCHITECTURE §11 without adding cancel UI.
 
-### 5.6 State management
+### 4.6 State management
 
 - Workspace state is a discriminated union (`SendState`, `SaveState`, unresolved placeholders), per UI/UX Spec §16.
 - Use a small store (for example Zustand) for shared state: active draft, last response, session, sync status.
@@ -207,7 +190,7 @@ UI v2.0 disables **Send** while a request is in flight and has no Cancel button.
 
 ---
 
-## 6. Implementation Phases
+## 5. Implementation Phases
 
 ### Phase 0: Foundation, Shell, and Design System
 
@@ -216,16 +199,16 @@ UI v2.0 disables **Send** while a request is in flight and has no Cancel button.
 **Tasks:**
 
 - [x] Confirm Tauri 2 + React + Vite + TypeScript (strict) builds
-- [ ] Add lint and format
-- [ ] Create `modules/{request,response,environment,account,project,sync,persistence}` with thin public exports
-- [ ] Define shared types from DATA_MODEL: `HttpMethod`, `BodyType`, `AuthType`, `EnvVarRole`, `KeyValuePair`, `AuthConfig`, `RequestDraft`, `ResponseView`
-- [ ] Implement design tokens and light/dark themes (UI §11)
-- [ ] Build shared components: buttons, inputs, secret input with reveal, tabs, key/value row, dialog, drawer, toast, empty state, split panel (UI §11.5)
-- [ ] Build the app shell: sidebar (Workspace, Collections, Environment, Settings), icon-only collapse under 1280 px, 960×600 minimum window (UI §3)
-- [ ] Add header placeholders: request name, Variables button, sync indicator (static "Local only"), account menu
-- [ ] Open directly into the Workspace (action-first)
-- [ ] Set up composition root (`src/`) with manual injection
-- [ ] Document `pnpm tauri dev` and build in the README
+- [x] Add lint and format
+- [x] Create `modules/{request,response,environment,account,project,sync,persistence}` with thin public exports
+- [x] Define shared types from DATA_MODEL: `HttpMethod`, `BodyType`, `AuthType`, `EnvVarRole`, `KeyValuePair`, `AuthConfig`, `RequestDraft`, `ResponseView`
+- [x] Implement design tokens and light/dark themes (UI §11)
+- [x] Build shared components: buttons, inputs, secret input with reveal, tabs, key/value row, dialog, drawer, toast, empty state, split panel (UI §11.5)
+- [x] Build the app shell: sidebar (Workspace, Collections, Environment, Settings), icon-only collapse under 1280 px, 960×600 minimum window (UI §3)
+- [x] Add header placeholders: request name, Variables button, sync indicator (static "Local only"), account menu
+- [x] Open directly into the Workspace (action-first)
+- [x] Set up composition root (`src/`) with manual injection
+- [x] Document `pnpm tauri dev` and build in the README
 
 **Acceptance criteria:**
 
@@ -245,7 +228,7 @@ UI v2.0 disables **Send** while a request is in flight and has no Cancel button.
 
 **Tasks:**
 
-- [ ] Run the persistence spike and record the decision as an ADR (SQLite vs Tauri store, section 5.2)
+- [ ] Run the persistence spike and record the decision as an ADR (SQLite vs Tauri store, section 4.2)
 - [ ] Define repository ports in owning modules; implement adapters in `modules/persistence`
 - [ ] Repositories for `AdHocRequest`, `EnvironmentVariable`, `Project`, `Collection`, `SavedRequest`, `UserSettings`, `UserAccount`, `Session`
 - [ ] Include `createdAt`, `updatedAt`, and `deletedAt` (tombstones) on syncable entities
@@ -273,7 +256,7 @@ UI v2.0 disables **Send** while a request is in flight and has no Cancel button.
 
 **Tasks:**
 
-- [ ] Define the `HttpClient` port and `TransportResult` (section 5.1)
+- [ ] Define the `HttpClient` port and `TransportResult` (section 4.1)
 - [ ] Implement `FetchHttpClient`
 - [ ] Run the transport spike (CORS, permissions, body handling); implement the Tauri HTTP adapter if chosen, with minimal capability scope
 - [ ] Implement the pure `EnvResolver`: replace `{{key}}` in URL, params, headers, body, and auth fields (AC-12); report unresolved keys
@@ -286,7 +269,7 @@ UI v2.0 disables **Send** while a request is in flight and has no Cancel button.
 - [ ] Send body only when the method supports it and `bodyType ≠ none` (GET disabled; see UI open decision #1)
 - [ ] Validate before sending: URL, header names, JSON body when `bodyType = json`
 - [ ] Detect `contentType` and `bodyFormat` (`json` / `html` / `raw`) without assuming JSON
-- [ ] Ignore stale results from superseded sends (section 5.5)
+- [ ] Ignore stale results from superseded sends (section 4.5)
 - [ ] Unit tests with a mocked `HttpClient`: methods, params (enabled only), headers, auth on/off, body types, env resolution, unresolved keys, HTTP 4xx/5xx treated as responses, timeouts, network errors
 - [ ] Integration test of each real adapter against a local test server
 
@@ -444,7 +427,7 @@ UI v2.0 disables **Send** while a request is in flight and has no Cancel button.
 
 **Goal:** Optional sync that never blocks offline use.
 
-**Prerequisite:** Resolve the sync backend decision (section 10, item 1) before starting. Until then, build against a `SyncRemote` port with a fake adapter.
+**Prerequisite:** Resolve the sync backend decision (section 9, item 1) before starting. Until then, build against a `SyncRemote` port with a fake adapter.
 
 **Tasks:**
 
@@ -484,7 +467,7 @@ UI v2.0 disables **Send** while a request is in flight and has no Cancel button.
 - [ ] Accessibility pass: keyboard reach, focus visibility, no color-only status, contrast checks in both themes
 - [ ] Security pass: secret storage, logs, sync, Tauri capability scopes
 - [ ] Production Tauri builds for supported desktop targets
-- [ ] Fix critical bugs; update docs (section 12)
+- [ ] Fix critical bugs; update docs (section 11)
 
 **Acceptance criteria:**
 
@@ -497,7 +480,7 @@ UI v2.0 disables **Send** while a request is in flight and has no Cancel button.
 
 ---
 
-## 7. Dependencies and Parallel Tracks
+## 6. Dependencies and Parallel Tracks
 
 | Phase | Depends on |
 |---|---|
@@ -516,7 +499,7 @@ After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environm
 
 ---
 
-## 8. Out of Scope (Do Not Implement)
+## 7. Out of Scope (Do Not Implement)
 
 - Automated, scheduled, or CI-based testing; test runner; scripts; test results
 - Load, stress, or performance testing
@@ -533,7 +516,7 @@ After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environm
 
 ---
 
-## 9. Requirements Traceability
+## 8. Requirements Traceability
 
 | Requirement | Phase(s) | UI/UX criteria |
 |---|---|---|
@@ -554,7 +537,7 @@ After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environm
 
 ---
 
-## 10. Open Decisions and Risks
+## 9. Open Decisions and Risks
 
 ### Open decisions
 
@@ -582,7 +565,7 @@ After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environm
 
 ---
 
-## 11. Definition of Done
+## 10. Definition of Done
 
 A task is done when:
 
@@ -597,25 +580,25 @@ A task is done when:
 
 ---
 
-## 12. Doc Alignment Fixes Needed
+## 11. Doc Alignment Fixes Needed
 
 | Document | Fix |
 |---|---|
 | ARCHITECTURE §1.4 | Remove "folders" from the Projects/Collections module description |
-| ARCHITECTURE §17 | Mark questions 1 and 3 as resolved by this plan (section 5.1); question 2 pending the Phase 1 spike |
+| ARCHITECTURE §17 | Mark questions 1 and 3 as resolved by this plan (section 4.1); question 2 pending the Phase 1 spike |
 | ARCHITECTURE §12 | Add `modules/persistence` and `presentation/` folders to the structure guideline |
-| ARCHITECTURE §11 | Note that stale-send handling is internal (token); the UI has no Cancel button (UI v2.0 §5.4) |
+| ARCHITECTURE §11 | Note that stale-send handling is internal (token); the UI has no Cancel button (UI v1.0 §5.4) |
 | DATA_MODEL | Add a note that `ResponseView.size` is derived from `body`, not stored |
 | UI_UX_SPEC | Replace UI open decisions 1, 2, 6 once confirmed |
 | PRD | Add a sync backend requirement or constraint (currently undefined) |
 
 ---
 
-## 13. Progress Tracker
+## 12. Progress Tracker
 
 | Phase | Status | Done | Notes |
 |---|---|---:|---|
-| 0 Foundation, shell, design system | In Progress | 1/11 | Tauri 2 + React + Vite + TS strict scaffold; Tailwind present; no modules/shell yet |
+| 0 Foundation, shell, design system | Completed | 11/11 | Shell + Stitch tokens/UI shells; mock data only; no HTTP/persistence yet |
 | 1 Persistence and secrets | Not Started | 0/9 | Spike: SQLite vs Tauri store |
 | 2 Request engine and resolver | Not Started | 0/13 | Spike: Fetch vs Tauri HTTP adapter |
 | 3 Workspace and builder UI | Not Started | 0/12 | |

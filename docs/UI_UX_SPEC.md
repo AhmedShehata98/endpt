@@ -1,34 +1,12 @@
 # UI/UX Specification — Endpt
 
 **Document type:** Product UI/UX specification
-**Version:** 2.0 (PRD-aligned rewrite of v1.0 "Relay API")
+**Version:** 1.0
 **Status:** MVP design baseline
 **Source of truth:** [PRD.md](./PRD.md). Supporting docs: [DATA_MODEL.md](./DATA_MODEL.md), [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 **Platform:** Desktop only (Tauri 2 + React + TypeScript). No browser tab, no browser-extension side panel, no mobile.
 
 > Rule: if this document and the PRD ever disagree, the PRD wins. Do not add UI for capabilities the PRD or DATA_MODEL does not define.
-
----
-
-## 0. What changed from v1.0
-
-| Area | v1.0 (Relay API) | v2.0 (Endpt) |
-|---|---|---|
-| Product name | Relay API | **Endpt** |
-| Platform | Browser tab / extension side panel | **Desktop only (Tauri)** |
-| Protocols | REST + GraphQL | **REST only** (GET, POST, PUT, PATCH, DELETE) |
-| Top-level views | 6 (incl. History, Test Runner) | **4 views** + 2 auth screens + overlays |
-| History / Test Runner / Scripts / Test Results | Included | **Removed** |
-| Organization | Collections + folders | **Project → Collection → Request** (no folders) |
-| Environments | Multiple named environments + selector | **Flat environment variables** (5 fixed roles), no selector |
-| Auth types | No Auth, Bearer, Basic, "others" | **Enable toggle + Token / API key / Username-password** |
-| Response tabs | Body, Headers, Cookies, Test Results | **Body, Headers** |
-| Large responses | "Load More" progressive reveal | **Virtualized rendering**; Copy and Fullscreen always use the full payload |
-| Body formats | JSON, HTML, XML, others | **JSON and HTML highlighted**, raw fallback |
-| Accounts / sync | Not specified | **Sign In, Sign Up, sync status, offline state** |
-| Settings | Shortcuts, history retention, import/export, editor prefs | **Theme, default method, wrap lines, sync, account** |
-| Import / export | Dialogs and entry points | **Removed** (not in PRD) |
-| Response fullscreen | Not in body | **Added** (FR-10) |
 
 ---
 

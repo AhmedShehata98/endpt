@@ -1,7 +1,41 @@
-# Tauri + React + Typescript
+# Endpt
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+Lightweight desktop API client (Tauri 2 + React + TypeScript + Vite).
 
-## Recommended IDE Setup
+## Prerequisites
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+- Node.js 20+
+- [pnpm](https://pnpm.io/)
+- [Rust](https://www.rust-lang.org/tools/install) (for Tauri)
+
+## Develop
+
+```bash
+pnpm install
+pnpm tauri dev
+```
+
+Frontend-only (Vite, no native shell):
+
+```bash
+pnpm dev
+```
+
+## Build
+
+```bash
+pnpm tauri build
+```
+
+## Lint and format
+
+```bash
+pnpm lint
+pnpm format
+```
+
+## Stack
+
+- Desktop shell: Tauri 2
+- UI: React 19 + TypeScript (strict) + Vite + Tailwind CSS 4
+- Modules under `modules/` (request, response, environment, account, project, sync, persistence)
