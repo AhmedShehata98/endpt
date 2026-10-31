@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
-import type { ThemePreference } from "@modules/account";
-import { DEFAULT_USER_SETTINGS } from "@modules/account";
-import { createEmptyDraft, type HttpMethod, type RequestDraft } from "@modules/request";
-import type { ResponseView } from "@modules/response";
+import { useCallback, useEffect, useState } from "react";
 import type { SyncStatus } from "@modules/sync";
 import { isAuthView, type AppView } from "@/app/navigation";
-import { MOCK_DRAFT, MOCK_RESPONSE } from "@/app/mock-data";
-import { applyTheme } from "@/lib/theme";
+import { MOCK_RESPONSE } from "@/app/mock-data";
+import { useCollapsedSidebar } from "@/hooks/useCollapsedSidebar";
+import { useEnvironmentVariables } from "@/hooks/useEnvironmentVariables";
+import { useSession } from "@/hooks/useSession";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useWorkspaceDraft } from "@/hooks/useWorkspaceDraft";
 import { AppHeader } from "@/shell/AppHeader";
 import { Sidebar } from "@/shell/Sidebar";
 import { CollectionsView } from "@/views/CollectionsView";
@@ -18,83 +18,62 @@ import { SignUpView } from "@/views/SignUpView";
 import { VariablesDrawer } from "@/views/VariablesDrawer";
 import { WorkspaceView } from "@/views/WorkspaceView";
 
-function useCollapsedSidebar(): boolean {
-  const [collapsed, setCollapsed] = useState(
-    () => typeof window !== "undefined" && window.innerWidth < 1280,
-  );
-
-  useEffect(() => {
-    const onResize = () => setCollapsed(window.innerWidth < 1280);
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, []);
-
-  return collapsed;
-}
+const PHASE0_SYNC_STATUS: SyncStatus = "local-only";
 
 export default function App() {
   const [view, setView] = useState<AppView>("workspace");
-  const [signedIn, setSignedIn] = useState(false);
-  const [displayName, setDisplayName] = useState<string | null>(null);
-  const [theme, setTheme] = useState<ThemePreference>(DEFAULT_USER_SETTINGS.theme);
-  const [defaultMethod, setDefaultMethod] = useState<HttpMethod>(
-    DEFAULT_USER_SETTINGS.defaultHttpMethod,
-  );
-  const [wrapLines, setWrapLines] = useState(DEFAULT_USER_SETTINGS.wrapResponseLines);
-  const [syncEnabled, setSyncEnabled] = useState(false);
-  const [draft, setDraft] = useState<RequestDraft>(MOCK_DRAFT);
-  const [response] = useState<ResponseView | null>(MOCK_RESPONSE);
   const [variablesOpen, setVariablesOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const [response] = useState(MOCK_RESPONSE);
+
   const collapsed = useCollapsedSidebar();
+  const session = useSession();
+  const { preferences, updatePreferences, setSyncEnabled } = useUserPreferences();
+  const { draft, setDraft, startNewRequest, openSavedRequest } = useWorkspaceDraft(
+    preferences.defaultHttpMethod,
+  );
+  const { variables, setVariables } = useEnvironmentVariables();
 
-  const syncStatus: SyncStatus = signedIn && syncEnabled ? "local-only" : "local-only";
+  const goWorkspace = useCallback(() => {
+    setView("workspace");
+  }, []);
+
+  const createNewRequest = useCallback(() => {
+    startNewRequest();
+    setView("workspace");
+  }, [startNewRequest]);
 
   useEffect(() => {
-    applyTheme(theme);
-  }, [theme]);
-
-  useEffect(() => {
-    if (theme !== "system") return;
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => applyTheme("system");
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, [theme]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const meta = e.metaKey || e.ctrlKey;
-      if (meta && e.key.toLowerCase() === "n") {
-        e.preventDefault();
-        setDraft(createEmptyDraft(defaultMethod));
-        setView("workspace");
+    const onKey = (event: KeyboardEvent) => {
+      const meta = event.metaKey || event.ctrlKey;
+      if (meta && event.key.toLowerCase() === "n") {
+        event.preventDefault();
+        createNewRequest();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [defaultMethod]);
+  }, [createNewRequest]);
+
 
   if (isAuthView(view)) {
     return view === "sign-in" ? (
       <SignInView
         onSignIn={(email) => {
-          setSignedIn(true);
-          setDisplayName(email.split("@")[0] ?? "User");
-          setView("workspace");
+          session.signIn(email);
+          goWorkspace();
         }}
         onGoSignUp={() => setView("sign-up")}
-        onContinueWithoutAccount={() => setView("workspace")}
+        onContinueWithoutAccount={goWorkspace}
       />
     ) : (
       <SignUpView
         onSignUp={(email, name) => {
-          setSignedIn(true);
-          setDisplayName(name || email.split("@")[0] || "User");
-          setView("workspace");
+          session.signUp(email, name);
+          goWorkspace();
         }}
         onGoSignIn={() => setView("sign-in")}
-        onContinueWithoutAccount={() => setView("workspace")}
+        onContinueWithoutAccount={goWorkspace}
       />
     );
   }
@@ -105,25 +84,21 @@ export default function App() {
         activeView={view}
         collapsed={collapsed}
         onNavigate={setView}
-        onNewRequest={() => {
-          setDraft(createEmptyDraft(defaultMethod));
-          setView("workspace");
-        }}
+        onNewRequest={createNewRequest}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
         <AppHeader
           requestName={draft.name ?? "Untitled Request"}
           breadcrumb={null}
-          unresolvedCount={1}
-          syncStatus={syncStatus}
-          signedIn={signedIn}
-          displayName={displayName}
+          unresolvedCount={0}
+          syncStatus={PHASE0_SYNC_STATUS}
+          signedIn={session.signedIn}
+          displayName={session.displayName}
           onOpenVariables={() => setVariablesOpen(true)}
           onSignIn={() => setView("sign-in")}
           onSignOut={() => {
-            setSignedIn(false);
-            setDisplayName(null);
+            session.signOut();
             setSyncEnabled(false);
           }}
         />
@@ -134,52 +109,47 @@ export default function App() {
               draft={draft}
               onDraftChange={setDraft}
               response={response}
+              wrapLines={preferences.wrapResponseLines}
               onOpenFullscreen={() => setFullscreenOpen(true)}
             />
           )}
           {view === "collections" && (
             <CollectionsView
-              signedIn={signedIn}
+              signedIn={session.signedIn}
               onSignIn={() => setView("sign-in")}
               onOpenRequest={(name, method) => {
-                setDraft({
-                  ...createEmptyDraft(method),
-                  name,
-                  url: "{{baseUrl}}/",
-                });
-                setView("workspace");
+                openSavedRequest(name, method);
+                goWorkspace();
               }}
             />
           )}
-          {view === "environment" && <EnvironmentView />}
+          {view === "environment" && (
+            <EnvironmentView variables={variables} onVariablesChange={setVariables} />
+          )}
           {view === "settings" && (
             <SettingsView
-              signedIn={signedIn}
-              theme={theme}
-              defaultMethod={defaultMethod}
-              wrapLines={wrapLines}
-              syncEnabled={syncEnabled}
-              onThemeChange={setTheme}
-              onDefaultMethodChange={setDefaultMethod}
-              onWrapLinesChange={setWrapLines}
-              onSyncEnabledChange={setSyncEnabled}
+              signedIn={session.signedIn}
+              preferences={preferences}
+              onPreferencesChange={updatePreferences}
               onSignIn={() => setView("sign-in")}
             />
           )}
         </main>
       </div>
 
-      <VariablesDrawer open={variablesOpen} onClose={() => setVariablesOpen(false)} />
+      <VariablesDrawer
+        open={variablesOpen}
+        variables={variables}
+        onClose={() => setVariablesOpen(false)}
+      />
 
-      {response && (
-        <ResponseFullscreen
-          open={fullscreenOpen}
-          response={response}
-          wrapLines={wrapLines}
-          onWrapLinesChange={setWrapLines}
-          onClose={() => setFullscreenOpen(false)}
-        />
-      )}
+      <ResponseFullscreen
+        open={fullscreenOpen}
+        response={response}
+        wrapLines={preferences.wrapResponseLines}
+        onWrapLinesChange={(wrapResponseLines) => updatePreferences({ wrapResponseLines })}
+        onClose={() => setFullscreenOpen(false)}
+      />
     </div>
   );
 }

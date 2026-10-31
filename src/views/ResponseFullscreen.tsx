@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Button, StatusPill } from "@/components";
 import type { ResponseView } from "@modules/response";
+import { ResponseBodyView } from "@/views/response/ResponseBodyView";
 
 interface ResponseFullscreenProps {
   open: boolean;
@@ -22,8 +23,8 @@ export function ResponseFullscreen({
   useEffect(() => {
     if (!open) return;
     closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -62,18 +63,18 @@ export function ResponseFullscreen({
           >
             Copy
           </Button>
-          <Button ref={closeRef} variant="ghost" size="sm" onClick={onClose} aria-label="Close fullscreen">
+          <Button
+            ref={closeRef}
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            aria-label="Close fullscreen"
+          >
             Close
           </Button>
         </div>
       </div>
-      <pre
-        className={`min-h-0 flex-1 overflow-auto p-4 font-mono text-[0.8125rem] leading-5 text-text-primary ${
-          wrapLines ? "whitespace-pre-wrap break-words" : "whitespace-pre"
-        }`}
-      >
-        {response.body || "This response has no body."}
-      </pre>
+      <ResponseBodyView body={response.body} wrapLines={wrapLines} className="p-4" />
     </div>
   );
 }

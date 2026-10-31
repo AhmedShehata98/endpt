@@ -1,31 +1,20 @@
 import type { ReactNode } from "react";
 import { Button, Select } from "@/components";
 import type { ThemePreference } from "@modules/account";
-import type { HttpMethod } from "@modules/request";
+import { HTTP_METHODS, type HttpMethod } from "@modules/request";
+import type { UserPreferences } from "@/hooks/useUserPreferences";
 
 interface SettingsViewProps {
   signedIn: boolean;
-  theme: ThemePreference;
-  defaultMethod: HttpMethod;
-  wrapLines: boolean;
-  syncEnabled: boolean;
-  onThemeChange: (theme: ThemePreference) => void;
-  onDefaultMethodChange: (method: HttpMethod) => void;
-  onWrapLinesChange: (wrap: boolean) => void;
-  onSyncEnabledChange: (enabled: boolean) => void;
+  preferences: UserPreferences;
+  onPreferencesChange: (patch: Partial<UserPreferences>) => void;
   onSignIn: () => void;
 }
 
 export function SettingsView({
   signedIn,
-  theme,
-  defaultMethod,
-  wrapLines,
-  syncEnabled,
-  onThemeChange,
-  onDefaultMethodChange,
-  onWrapLinesChange,
-  onSyncEnabledChange,
+  preferences,
+  onPreferencesChange,
   onSignIn,
 }: SettingsViewProps) {
   return (
@@ -58,8 +47,10 @@ export function SettingsView({
             <span className="text-text-secondary">Theme</span>
             <Select
               aria-label="Theme"
-              value={theme}
-              onChange={(e) => onThemeChange(e.target.value as ThemePreference)}
+              value={preferences.theme}
+              onChange={(e) =>
+                onPreferencesChange({ theme: e.target.value as ThemePreference })
+              }
             >
               <option value="system">System</option>
               <option value="light">Light</option>
@@ -73,13 +64,17 @@ export function SettingsView({
             <span className="text-text-secondary">Default method</span>
             <Select
               aria-label="Default HTTP method"
-              value={defaultMethod}
-              onChange={(e) => onDefaultMethodChange(e.target.value as HttpMethod)}
+              value={preferences.defaultHttpMethod}
+              onChange={(e) =>
+                onPreferencesChange({
+                  defaultHttpMethod: e.target.value as HttpMethod,
+                })
+              }
               mono
             >
-              {(["GET", "POST", "PUT", "PATCH", "DELETE"] as HttpMethod[]).map((m) => (
-                <option key={m} value={m}>
-                  {m}
+              {HTTP_METHODS.map((method) => (
+                <option key={method} value={method}>
+                  {method}
                 </option>
               ))}
             </Select>
@@ -91,8 +86,10 @@ export function SettingsView({
             <span>Wrap response lines</span>
             <input
               type="checkbox"
-              checked={wrapLines}
-              onChange={(e) => onWrapLinesChange(e.target.checked)}
+              checked={preferences.wrapResponseLines}
+              onChange={(e) =>
+                onPreferencesChange({ wrapResponseLines: e.target.checked })
+              }
               className="size-3.5 accent-accent"
             />
           </label>
@@ -107,14 +104,14 @@ export function SettingsView({
                 <span>Enable cloud sync</span>
                 <input
                   type="checkbox"
-                  checked={syncEnabled}
-                  onChange={(e) => onSyncEnabledChange(e.target.checked)}
+                  checked={preferences.syncEnabled}
+                  onChange={(e) => onPreferencesChange({ syncEnabled: e.target.checked })}
                   className="size-3.5 accent-accent"
                 />
               </label>
               <div className="flex items-center justify-between">
                 <span className="text-[0.75rem] text-text-muted">Status: Local only</span>
-                <Button variant="secondary" size="sm" disabled={!syncEnabled}>
+                <Button variant="secondary" size="sm" disabled={!preferences.syncEnabled}>
                   Sync now
                 </Button>
               </div>

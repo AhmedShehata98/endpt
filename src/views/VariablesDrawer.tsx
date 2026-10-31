@@ -1,26 +1,28 @@
 import { Drawer } from "@/components";
-import { MOCK_ENV_VARS } from "@/app/mock-data";
-import { SECRET_ENV_ROLES } from "@modules/environment";
+import { SECRET_ENV_ROLES, type EnvironmentVariable } from "@modules/environment";
 
 interface VariablesDrawerProps {
   open: boolean;
+  variables: EnvironmentVariable[];
   onClose: () => void;
 }
 
-export function VariablesDrawer({ open, onClose }: VariablesDrawerProps) {
+export function VariablesDrawer({ open, variables, onClose }: VariablesDrawerProps) {
   return (
     <Drawer open={open} title="Variables" onClose={onClose}>
       <div className="divide-y divide-border-subtle">
-        {MOCK_ENV_VARS.map((v) => (
-          <div key={v.id} className="space-y-1 p-3">
+        {variables.map((variable) => (
+          <div key={variable.id} className="space-y-1 p-3">
             <div className="flex items-center justify-between">
-              <span className="font-mono text-[0.75rem] font-semibold text-accent">{v.key}</span>
+              <span className="font-mono text-[0.75rem] font-semibold text-accent">
+                {variable.key}
+              </span>
               <span className="rounded bg-bg-active px-1.5 text-[0.6875rem] text-text-muted">
-                {v.role}
+                {variable.role}
               </span>
             </div>
             <p className="truncate font-mono text-[0.75rem] text-text-secondary">
-              {SECRET_ENV_ROLES.has(v.role) ? "••••••••" : v.value || "(empty)"}
+              {SECRET_ENV_ROLES.has(variable.role) ? "••••••••" : variable.value || "(empty)"}
             </p>
           </div>
         ))}

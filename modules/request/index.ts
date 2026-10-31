@@ -9,4 +9,8 @@ export type {
   SavedRequest,
 } from "./types/http.types";
 
-export { createEmptyAuthConfig, createEmptyDraft } from "./types/http.types";
+export {
+  HTTP_METHODS,
+  createEmptyAuthConfig,
+  createEmptyDraft,
+} from "./types/http.types";

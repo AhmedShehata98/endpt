@@ -1,26 +1,19 @@
-import { useState } from "react";
 import { Button, SecretInput } from "@/components";
-import { MOCK_ENV_VARS } from "@/app/mock-data";
 import {
   ENV_VAR_ROLE_DEFAULT_KEYS,
+  ENV_VAR_ROLE_LABELS,
+  ENV_VAR_ROLES,
   SECRET_ENV_ROLES,
   type EnvironmentVariable,
   type EnvVarRole,
 } from "@modules/environment";
 
-const ROLES: EnvVarRole[] = ["authToken", "apiKey", "username", "password", "baseUrl"];
+interface EnvironmentViewProps {
+  variables: EnvironmentVariable[];
+  onVariablesChange: (variables: EnvironmentVariable[]) => void;
+}
 
-const ROLE_LABELS: Record<EnvVarRole, string> = {
-  authToken: "Auth token",
-  apiKey: "API key",
-  username: "Username",
-  password: "Password",
-  baseUrl: "Base URL",
-};
-
-export function EnvironmentView() {
-  const [vars, setVars] = useState<EnvironmentVariable[]>(MOCK_ENV_VARS);
-
+export function EnvironmentView({ variables, onVariablesChange }: EnvironmentViewProps) {
   return (
     <div className="flex h-full flex-col bg-bg-surface">
       <div className="flex h-12 items-center justify-between border-b border-border-default px-4">
@@ -34,10 +27,11 @@ export function EnvironmentView() {
           variant="primary"
           size="sm"
           onClick={() => {
-            const used = new Set(vars.map((v) => v.role));
-            const role = ROLES.find((r) => !used.has(r)) ?? "baseUrl";
-            setVars((prev) => [
-              ...prev,
+            const used = new Set(variables.map((variable) => variable.role));
+            const role: EnvVarRole =
+              ENV_VAR_ROLES.find((candidate) => !used.has(candidate)) ?? "baseUrl";
+            onVariablesChange([
+              ...variables,
               {
                 id: crypto.randomUUID(),
                 userId: null,
@@ -65,11 +59,13 @@ export function EnvironmentView() {
             </tr>
           </thead>
           <tbody>
-            {vars.map((row) => {
+            {variables.map((row) => {
               const secret = SECRET_ENV_ROLES.has(row.role);
               return (
                 <tr key={row.id} className="border-t border-border-subtle">
-                  <td className="px-4 py-2 text-text-secondary">{ROLE_LABELS[row.role]}</td>
+                  <td className="px-4 py-2 text-text-secondary">
+                    {ENV_VAR_ROLE_LABELS[row.role]}
+                  </td>
                   <td className="px-4 py-2 font-mono text-accent">{row.key}</td>
                   <td className="px-4 py-2">
                     {secret ? (
@@ -77,8 +73,10 @@ export function EnvironmentView() {
                         aria-label={`${row.key} value`}
                         value={row.value}
                         onChange={(value) =>
-                          setVars((prev) =>
-                            prev.map((v) => (v.id === row.id ? { ...v, value } : v)),
+                          onVariablesChange(
+                            variables.map((variable) =>
+                              variable.id === row.id ? { ...variable, value } : variable,
+                            ),
                           )
                         }
                       />
@@ -87,9 +85,11 @@ export function EnvironmentView() {
                         className="h-8 w-full rounded-md border border-border-default bg-bg-surface px-2 font-mono text-[0.8125rem]"
                         value={row.value}
                         onChange={(e) =>
-                          setVars((prev) =>
-                            prev.map((v) =>
-                              v.id === row.id ? { ...v, value: e.target.value } : v,
+                          onVariablesChange(
+                            variables.map((variable) =>
+                              variable.id === row.id
+                                ? { ...variable, value: e.target.value }
+                                : variable,
                             ),
                           )
                         }
@@ -101,7 +101,9 @@ export function EnvironmentView() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setVars((prev) => prev.filter((v) => v.id !== row.id))}
+                      onClick={() =>
+                        onVariablesChange(variables.filter((variable) => variable.id !== row.id))
+                      }
                       aria-label={`Delete ${row.key}`}
                     >
                       Delete
