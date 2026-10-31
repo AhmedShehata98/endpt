@@ -18,6 +18,7 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![
             secrets::encrypt_secret,
             secrets::decrypt_secret

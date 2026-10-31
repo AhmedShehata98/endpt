@@ -256,22 +256,22 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 
 **Tasks:**
 
-- [ ] Define the `HttpClient` port and `TransportResult` (section 4.1)
-- [ ] Implement `FetchHttpClient`
-- [ ] Run the transport spike (CORS, permissions, body handling); implement the Tauri HTTP adapter if chosen, with minimal capability scope
-- [ ] Implement the pure `EnvResolver`: replace `{{key}}` in URL, params, headers, body, and auth fields (AC-12); report unresolved keys
-- [ ] Implement `RequestService`: resolve → validate → prepare → send → map to `SendResult`
-- [ ] Build URL from base URL plus enabled query params only
-- [ ] Apply headers and `AuthConfig` only when `auth.enabled`:
+- [x] Define the `HttpClient` port and `TransportResult` (section 4.1)
+- [x] Implement `FetchHttpClient`
+- [x] Run the transport spike (CORS, permissions, body handling); implement the Tauri HTTP adapter if chosen, with minimal capability scope
+- [x] Implement the pure `EnvResolver`: replace `{{key}}` in URL, params, headers, body, and auth fields (AC-12); report unresolved keys
+- [x] Implement `RequestService`: resolve → validate → prepare → send → map to `SendResult`
+- [x] Build URL from base URL plus enabled query params only
+- [x] Apply headers and `AuthConfig` only when `auth.enabled`:
   - Token → `Authorization: Bearer …`
   - API key → configured header name
   - Username/password → Basic
-- [ ] Send body only when the method supports it and `bodyType ≠ none` (GET disabled; see UI open decision #1)
-- [ ] Validate before sending: URL, header names, JSON body when `bodyType = json`
-- [ ] Detect `contentType` and `bodyFormat` (`json` / `html` / `raw`) without assuming JSON
-- [ ] Ignore stale results from superseded sends (section 4.5)
-- [ ] Unit tests with a mocked `HttpClient`: methods, params (enabled only), headers, auth on/off, body types, env resolution, unresolved keys, HTTP 4xx/5xx treated as responses, timeouts, network errors
-- [ ] Integration test of each real adapter against a local test server
+- [x] Send body only when the method supports it and `bodyType ≠ none` (GET disabled; see UI open decision #1)
+- [x] Validate before sending: URL, header names, JSON body when `bodyType = json`
+- [x] Detect `contentType` and `bodyFormat` (`json` / `html` / `raw`) without assuming JSON
+- [x] Ignore stale results from superseded sends (section 4.5)
+- [x] Unit tests with a mocked `HttpClient`: methods, params (enabled only), headers, auth on/off, body types, env resolution, unresolved keys, HTTP 4xx/5xx treated as responses, timeouts, network errors
+- [x] Integration test of each real adapter against a local test server
 
 **Acceptance criteria:**
 
@@ -544,7 +544,7 @@ After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environm
 | # | Decision | Blocks | Default assumption |
 |--:|---|---|---|
 | 1 | **Cloud sync backend** (hosted service or custom API). No document defines it | Phase 8 | Build against a `SyncRemote` port with a fake adapter until decided |
-| 2 | Production HTTP adapter (Fetch vs Tauri HTTP plugin) | Phase 2 | Tauri HTTP adapter in production; Fetch for tests |
+| 2 | Production HTTP adapter (Fetch vs Tauri HTTP plugin) | ~~Phase 2~~ | **Resolved:** Tauri HTTP plugin in production; Fetch for tests and non-desktop runs |
 | 3 | Local store (SQLite vs Tauri store) | ~~Phase 1~~ | **Resolved:** SQLite ([ADR-005](./adr/ADR-005-local-persistence.md)) |
 | 4 | Body editor allowed for DELETE? | Phase 2–3 | Yes; only GET is disabled |
 | 5 | Do guests persist preferences? | Phase 6 | No; defaults only |
@@ -600,7 +600,7 @@ A task is done when:
 |---|---|---:|---|
 | 0 Foundation, shell, design system | Completed | 11/11 | Shell + Stitch tokens/UI shells; mock data only; no HTTP/persistence yet |
 | 1 Persistence and secrets | Completed | 9/9 | SQLite + keychain encryption; guest draft/env persist |
-| 2 Request engine and resolver | Not Started | 0/13 | Spike: Fetch vs Tauri HTTP adapter |
+| 2 Request engine and resolver | Completed | 13/13 | Tauri HTTP plugin in production; Fetch for tests and non-desktop runs |
 | 3 Workspace and builder UI | Not Started | 0/12 | |
 | 4 Response viewer | Not Started | 0/10 | |
 | 5 Environment variables | Not Started | 0/9 | |

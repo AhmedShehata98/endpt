@@ -35,7 +35,9 @@ pnpm format
 pnpm test
 ```
 
-Local data uses SQLite (`sqlite:endpt.db`) inside the Tauri app. Env values and auth secrets are encrypted at rest; the master key lives in the OS keychain.
+Local data uses SQLite (`sqlite:endpt.db`) inside the Tauri app (Linux: `~/.config/com.ahmed-shehata.endpt/`). Env values and auth secrets are encrypted at rest; the master key lives in the OS keychain.
+
+Do not edit an already-applied SQL migration file. Add a new numbered migration under `src-tauri/migrations/` and register it in `src-tauri/src/lib.rs`. Editing migration 1 after first launch causes: `migration 1 was previously applied but has been modified` — fix by deleting the local `endpt.db` (dev only) or shipping a new migration.
 
 ## Stack
 

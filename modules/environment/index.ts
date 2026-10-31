@@ -8,3 +8,6 @@ export {
 
 export type { EnvironmentVariableRepository } from "./ports/environment-variable.repository";
 export { DuplicateEnvKeyError } from "./ports/environment-variable.repository";
+
+export type { EnvBinding, ResolvedDraft } from "./application/resolve-draft";
+export { resolveDraft } from "./application/resolve-draft";

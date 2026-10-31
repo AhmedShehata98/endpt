@@ -360,7 +360,7 @@ Other modules follow the same idea when they need Application logic, ports, or I
 ## 14. Deployment & Runtime
 
 ### Runtime Environment
-Desktop (Tauri) on major desktop platforms. `FetchHttpClient` uses the Fetch API available in the webview; respect that context’s permissions. A future native HTTP adapter may run outside Fetch constraints behind the same port.
+Desktop (Tauri) on major desktop platforms. Production requests use `TauriHttpClient` (`tauri-plugin-http`) behind the `HttpClient` port, so they are not limited by webview CORS. `FetchHttpClient` remains for tests and non-desktop runs.
 
 ### Build Process
 Vite + Tauri build pipeline (`pnpm` / project scripts as documented in the README).
@@ -422,7 +422,7 @@ Local development vs production builds via standard Vite/Tauri env configuration
 
 ## 17. Open Questions
 
-- When to introduce a native desktop HTTP Infrastructure adapter vs continuing with `FetchHttpClient` in the Tauri webview.
+- ~~When to introduce a native desktop HTTP Infrastructure adapter vs continuing with `FetchHttpClient` in the Tauri webview.~~ — **Resolved:** production uses `TauriHttpClient` (`tauri-plugin-http`) behind `HttpClient`. `FetchHttpClient` stays for tests and non-desktop runs.
 - ~~Exact local persistence technology (SQLite vs Tauri store)~~ — **Resolved:** SQLite via `@tauri-apps/plugin-sql` ([ADR-005](./adr/ADR-005-local-persistence.md)).
 - Align [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) Phase 2 wording with this document’s port + adapter model (desktop-safe HTTP as an alternative adapter, not a contradiction of the `HttpClient` port).
 
