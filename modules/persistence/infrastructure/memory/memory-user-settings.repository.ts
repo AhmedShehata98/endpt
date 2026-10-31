@@ -13,6 +13,15 @@ export class MemoryUserSettingsRepository implements UserSettingsRepository {
     return null;
   }
 
+  async getByUserIdForSync(userId: string): Promise<UserSettings | null> {
+    for (const settings of this.byId.values()) {
+      if (settings.userId === userId) {
+        return structuredClone(settings);
+      }
+    }
+    return null;
+  }
+
   async save(settings: UserSettings): Promise<UserSettings> {
     this.byId.set(settings.id, structuredClone(settings));
     return structuredClone(settings);
@@ -22,5 +31,9 @@ export class MemoryUserSettingsRepository implements UserSettingsRepository {
     const existing = this.byId.get(id);
     if (!existing) return;
     this.byId.set(id, { ...existing, deletedAt, updatedAt: deletedAt });
+  }
+
+  async hardDelete(id: string): Promise<void> {
+    this.byId.delete(id);
   }
 }

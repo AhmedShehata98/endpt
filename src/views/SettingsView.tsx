@@ -9,8 +9,11 @@ interface SettingsViewProps {
   displayName?: string | null;
   email?: string | null;
   lastSyncedAt?: string | null;
+  syncStatusLabel?: string;
+  syncBusy?: boolean;
   preferences: UserPreferences;
   onPreferencesChange: (patch: Partial<UserPreferences>) => void;
+  onSyncNow?: () => void;
   onSignIn: () => void;
   onSignUp: () => void;
   onSignOut: () => void;
@@ -21,8 +24,11 @@ export function SettingsView({
   displayName,
   email,
   lastSyncedAt = null,
+  syncStatusLabel = "Local only",
+  syncBusy = false,
   preferences,
   onPreferencesChange,
+  onSyncNow,
   onSignIn,
   onSignUp,
   onSignOut,
@@ -138,11 +144,16 @@ export function SettingsView({
               </label>
               <div className="flex items-center justify-between gap-3">
                 <div className="text-[0.75rem] text-text-muted">
-                  <p>Status: Local only</p>
+                  <p>Status: {syncStatusLabel}</p>
                   <p>Last synced: {lastSyncedAt ? formatSyncedAt(lastSyncedAt) : "Never"}</p>
                 </div>
-                <Button variant="secondary" size="sm" disabled={!preferences.syncEnabled}>
-                  Sync now
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={!preferences.syncEnabled || syncBusy}
+                  onClick={onSyncNow}
+                >
+                  {syncBusy ? "Syncing…" : "Sync now"}
                 </Button>
               </div>
             </div>

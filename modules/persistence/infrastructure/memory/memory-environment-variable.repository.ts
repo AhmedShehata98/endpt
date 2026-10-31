@@ -14,6 +14,13 @@ export class MemoryEnvironmentVariableRepository implements EnvironmentVariableR
       .map((v) => structuredClone(v));
   }
 
+  async listByUserIdForSync(userId: string | null): Promise<EnvironmentVariable[]> {
+    return [...this.byId.values()]
+      .filter((v) => v.userId === userId)
+      .sort((a, b) => a.key.localeCompare(b.key))
+      .map((v) => structuredClone(v));
+  }
+
   async getById(id: string): Promise<EnvironmentVariable | null> {
     const found = this.byId.get(id);
     return found ? structuredClone(found) : null;
@@ -38,5 +45,9 @@ export class MemoryEnvironmentVariableRepository implements EnvironmentVariableR
     const existing = this.byId.get(id);
     if (!existing) return;
     this.byId.set(id, { ...existing, deletedAt, updatedAt: deletedAt });
+  }
+
+  async hardDelete(id: string): Promise<void> {
+    this.byId.delete(id);
   }
 }

@@ -28,6 +28,17 @@ export class SqliteUserSettingsRepository implements UserSettingsRepository {
     return rows[0] ? fromRow(rows[0]) : null;
   }
 
+  async getByUserIdForSync(userId: string): Promise<UserSettings | null> {
+    const rows = await this.db.select<SettingsRow[]>(
+      `SELECT id, user_id, theme, default_http_method, wrap_response_lines, sync_enabled, updated_at, deleted_at
+       FROM user_settings
+       WHERE user_id = $1
+       LIMIT 1`,
+      [userId],
+    );
+    return rows[0] ? fromRow(rows[0]) : null;
+  }
+
   async save(settings: UserSettings): Promise<UserSettings> {
     await this.db.execute(
       `INSERT INTO user_settings
@@ -60,6 +71,10 @@ export class SqliteUserSettingsRepository implements UserSettingsRepository {
       "UPDATE user_settings SET deleted_at = $1, updated_at = $1 WHERE id = $2",
       [deletedAt, id],
     );
+  }
+
+  async hardDelete(id: string): Promise<void> {
+    await this.db.execute("DELETE FROM user_settings WHERE id = $1", [id]);
   }
 }
 

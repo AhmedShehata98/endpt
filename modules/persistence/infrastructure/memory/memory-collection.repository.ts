@@ -11,6 +11,13 @@ export class MemoryCollectionRepository implements CollectionRepository {
       .map((c) => structuredClone(c));
   }
 
+  async listByProjectIdForSync(projectId: string): Promise<Collection[]> {
+    return [...this.byId.values()]
+      .filter((c) => c.projectId === projectId)
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.localeCompare(b.createdAt))
+      .map((c) => structuredClone(c));
+  }
+
   async getById(id: string): Promise<Collection | null> {
     const found = this.byId.get(id);
     return found ? structuredClone(found) : null;
@@ -25,5 +32,9 @@ export class MemoryCollectionRepository implements CollectionRepository {
     const existing = this.byId.get(id);
     if (!existing) return;
     this.byId.set(id, { ...existing, deletedAt, updatedAt: deletedAt });
+  }
+
+  async hardDelete(id: string): Promise<void> {
+    this.byId.delete(id);
   }
 }

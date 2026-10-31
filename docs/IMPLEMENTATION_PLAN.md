@@ -427,19 +427,19 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 
 **Goal:** Optional sync that never blocks offline use.
 
-**Prerequisite:** Resolve the sync backend decision (section 9, item 1) before starting. Until then, build against a `SyncRemote` port with a fake adapter.
+**Prerequisite:** Sync backend decided — Firebase Auth + Firestore ([ADR-006](./adr/ADR-006-firebase-sync.md)).
 
 **Tasks:**
 
-- [ ] Define `SyncRemote` port and implement the chosen backend adapter
-- [ ] Sync `UserSettings`, `Project`, `Collection`, `SavedRequest`, `EnvironmentVariable`
-- [ ] Never sync `Session`, `AdHocRequest`, or `ResponseView`
-- [ ] Last-write-wins by `updatedAt`; soft-delete tombstones, purged after sync (DATA_MODEL §5)
-- [ ] TLS in transit; secrets stay encrypted; never sync plaintext credentials
-- [ ] Run sync only when `syncEnabled` and the network is available; never block startup or navigation
-- [ ] Header sync indicator with all states: Local only, Offline, Syncing…, Synced, Sync failed. Retry (UI §4.2)
-- [ ] Retry and error feedback; local data is always preserved
-- [ ] Unit tests for merge, tombstones, and conflict rules with in-memory fakes
+- [x] Define `SyncRemote` port and implement the chosen backend adapter (`FirebaseSyncRemote` + `FakeSyncRemote`)
+- [x] Sync `UserSettings`, `Project`, `Collection`, `SavedRequest`, `EnvironmentVariable`
+- [x] Never sync `Session`, `AdHocRequest`, or `ResponseView`
+- [x] Last-write-wins by `updatedAt`; soft-delete tombstones, purged after sync (DATA_MODEL §5)
+- [x] TLS in transit; secrets stay encrypted; never sync plaintext credentials
+- [x] Run sync only when `syncEnabled` and the network is available; never block startup or navigation
+- [x] Header sync indicator with all states: Local only, Offline, Syncing…, Synced, Sync failed. Retry (UI §4.2)
+- [x] Retry and error feedback; local data is always preserved
+- [x] Unit tests for merge, tombstones, and conflict rules with in-memory fakes
 
 **Acceptance criteria:**
 
@@ -543,7 +543,7 @@ After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environm
 
 | # | Decision | Blocks | Default assumption |
 |--:|---|---|---|
-| 1 | **Cloud sync backend** (hosted service or custom API). No document defines it | Phase 8 | Build against a `SyncRemote` port with a fake adapter until decided |
+| 1 | **Cloud sync backend** (hosted service or custom API). No document defines it | ~~Phase 8~~ | **Resolved:** Firebase Auth + Firestore ([ADR-006](./adr/ADR-006-firebase-sync.md)); same email+password cloud link |
 | 2 | Production HTTP adapter (Fetch vs Tauri HTTP plugin) | ~~Phase 2~~ | **Resolved:** Tauri HTTP plugin in production; Fetch for tests and non-desktop runs |
 | 3 | Local store (SQLite vs Tauri store) | ~~Phase 1~~ | **Resolved:** SQLite ([ADR-005](./adr/ADR-005-local-persistence.md)) |
 | 4 | Body editor allowed for DELETE? | Phase 2–3 | Yes; only GET is disabled |
@@ -556,7 +556,7 @@ After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environm
 | Risk | Impact | Mitigation |
 |---|---|---|
 | CORS and webview limits break real APIs with Fetch | High | Transport spike in Phase 2; Tauri HTTP adapter behind the same port |
-| No defined sync backend | High | Port plus fake adapter; decide before Phase 8 |
+| ~~No defined sync backend~~ | — | **Resolved:** ADR-006 Firebase |
 | Large responses freeze the UI | Medium | CodeMirror viewport rendering; format detection off the render path; profile early |
 | Conflating HTTP 4xx/5xx with transport failure | High | Separate `TransportResult` kinds; tests in Phase 2 |
 | Secrets leak through logs or sync | High | Log allowlist; key in keychain; security pass in Phase 9 |
@@ -590,7 +590,7 @@ A task is done when:
 | ARCHITECTURE §11 | Note that stale-send handling is internal (token); the UI has no Cancel button (UI v1.0 §5.4) |
 | DATA_MODEL | Add a note that `ResponseView.size` is derived from `body`, not stored |
 | UI_UX_SPEC | Replace UI open decisions 1, 2, 6 once confirmed |
-| PRD | Add a sync backend requirement or constraint (currently undefined) |
+| ~~PRD~~ | ~~Add a sync backend requirement~~ — **Done:** FR-16 references Firebase / ADR-006 |
 
 ---
 
@@ -606,7 +606,7 @@ A task is done when:
 | 5 Environment variables | Completed | 9/9 | Shared editor + Variables drawer draft/Apply; Fix variable Flow B |
 | 6 Accounts and settings | Completed | 7/7 | Argon2 local auth + Session restore; UserSettings persist when signed in; guests defaults-only |
 | 7 Projects and collections | Completed | 9/9 | ProjectService + Collections tree + Save dialog; cascade soft-delete; Workspace bind/open/resave |
-| 8 Cloud sync | Not Started | 0/9 | Blocked on sync backend decision |
+| 8 Cloud sync | Completed | 9/9 | Firebase Auth + Firestore; SyncRemote + LWW engine |
 | 9 Integration and release | Not Started | 0/10 | |
 
 **Status values:** `Not Started`, `In Progress`, `Blocked`, `Completed`.

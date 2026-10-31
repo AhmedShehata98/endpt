@@ -51,7 +51,7 @@
 - **FR-13:** The user can add an environment variable for auth username and password.
 - **FR-14:** The user can add an environment variable for a base URL.
 - **FR-15:** The user can sign up or sign in to an account.
-- **FR-16:** The user account is local-first and can sync to the cloud.
+- **FR-16:** The user account is local-first and can sync to the cloud. Cloud sync uses Firebase Authentication and Cloud Firestore; it is optional; data in transit uses TLS; secret fields are client-encrypted before upload ([ADR-006](./adr/ADR-006-firebase-sync.md)).
 - **FR-17:** The account stores the user’s personal information, including user settings and preferences.
 - **FR-18:** The system can be used fully offline and operates as a local-first system.
 - **FR-19:** Each user account can create one or more projects.

@@ -42,6 +42,26 @@ export class SqliteEnvironmentVariableRepository implements EnvironmentVariableR
     return Promise.all(rows.map((row) => this.fromRow(row)));
   }
 
+  async listByUserIdForSync(userId: string | null): Promise<EnvironmentVariable[]> {
+    const rows =
+      userId == null
+        ? await this.db.select<EnvRow[]>(
+            `SELECT id, user_id, key, value_ciphertext, role, updated_at, deleted_at
+             FROM environment_variables
+             WHERE user_id IS NULL
+             ORDER BY key ASC`,
+          )
+        : await this.db.select<EnvRow[]>(
+            `SELECT id, user_id, key, value_ciphertext, role, updated_at, deleted_at
+             FROM environment_variables
+             WHERE user_id = $1
+             ORDER BY key ASC`,
+            [userId],
+          );
+
+    return Promise.all(rows.map((row) => this.fromRow(row)));
+  }
+
   async getById(id: string): Promise<EnvironmentVariable | null> {
     const rows = await this.db.select<EnvRow[]>(
       `SELECT id, user_id, key, value_ciphertext, role, updated_at, deleted_at
@@ -86,6 +106,10 @@ export class SqliteEnvironmentVariableRepository implements EnvironmentVariableR
       "UPDATE environment_variables SET deleted_at = $1, updated_at = $1 WHERE id = $2",
       [deletedAt, id],
     );
+  }
+
+  async hardDelete(id: string): Promise<void> {
+    await this.db.execute("DELETE FROM environment_variables WHERE id = $1", [id]);
   }
 
   private async assertUniqueKey(variable: EnvironmentVariable): Promise<void> {

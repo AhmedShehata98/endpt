@@ -32,6 +32,17 @@ export class SqliteSavedRequestRepository implements SavedRequestRepository {
     return Promise.all(rows.map((row) => this.fromRow(row)));
   }
 
+  async listByCollectionIdForSync(collectionId: string): Promise<SavedRequest[]> {
+    const rows = await this.db.select<SavedRow[]>(
+      `SELECT id, collection_id, draft_json, sort_order, created_at, updated_at, deleted_at
+       FROM saved_requests
+       WHERE collection_id = $1
+       ORDER BY sort_order ASC, created_at ASC`,
+      [collectionId],
+    );
+    return Promise.all(rows.map((row) => this.fromRow(row)));
+  }
+
   async getById(id: string): Promise<SavedRequest | null> {
     const rows = await this.db.select<SavedRow[]>(
       `SELECT id, collection_id, draft_json, sort_order, created_at, updated_at, deleted_at
@@ -72,6 +83,10 @@ export class SqliteSavedRequestRepository implements SavedRequestRepository {
       "UPDATE saved_requests SET deleted_at = $1, updated_at = $1 WHERE id = $2",
       [deletedAt, id],
     );
+  }
+
+  async hardDelete(id: string): Promise<void> {
+    await this.db.execute("DELETE FROM saved_requests WHERE id = $1", [id]);
   }
 
   private async fromRow(row: SavedRow): Promise<SavedRequest> {

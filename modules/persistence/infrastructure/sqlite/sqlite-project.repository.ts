@@ -27,6 +27,17 @@ export class SqliteProjectRepository implements ProjectRepository {
     return rows.map(fromRow);
   }
 
+  async listByUserIdForSync(userId: string): Promise<Project[]> {
+    const rows = await this.db.select<ProjectRow[]>(
+      `SELECT id, user_id, name, description, sort_order, created_at, updated_at, deleted_at
+       FROM projects
+       WHERE user_id = $1
+       ORDER BY sort_order ASC, created_at ASC`,
+      [userId],
+    );
+    return rows.map(fromRow);
+  }
+
   async getById(id: string): Promise<Project | null> {
     const rows = await this.db.select<ProjectRow[]>(
       `SELECT id, user_id, name, description, sort_order, created_at, updated_at, deleted_at
@@ -67,6 +78,10 @@ export class SqliteProjectRepository implements ProjectRepository {
       "UPDATE projects SET deleted_at = $1, updated_at = $1 WHERE id = $2",
       [deletedAt, id],
     );
+  }
+
+  async hardDelete(id: string): Promise<void> {
+    await this.db.execute("DELETE FROM projects WHERE id = $1", [id]);
   }
 }
 

@@ -342,7 +342,7 @@ Other modules follow the same idea when they need Application logic, ports, or I
 - **response:** Response viewing concerns.
 - **project:** Projects and collections (no nested folders inside collections for MVP).
 - **environment:** Variables and `{{key}}` resolution used before send.
-- **account / sync:** Optional identity and cloud sync.
+- **account / sync:** Optional identity and cloud sync. Sync uses a `SyncRemote` port; production adapter is Firebase Auth + Firestore ([ADR-006](./adr/ADR-006-firebase-sync.md)); SQLite stays the offline source of truth.
 - **persistence:** Local SQLite adapters and encryption helpers; repository ports live in owning modules.
 - **src:** Tauri/React shell wiring (composition root injects Infrastructure into Application).
 
@@ -406,6 +406,8 @@ Local development vs production builds via standard Vite/Tauri env configuration
 - **Decision:** Omit a Domain Layer until real domain rules justify it.
 - **Alternatives:** Introduce entities/use-case domain packages now.
 - **Consequences:** Simpler tree; Application + ports cover current needs.
+
+See also [ADR-005](./adr/ADR-005-local-persistence.md) (SQLite) and [ADR-006](./adr/ADR-006-firebase-sync.md) (Firebase sync).
 
 ---
 

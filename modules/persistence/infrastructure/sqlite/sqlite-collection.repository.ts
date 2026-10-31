@@ -27,6 +27,17 @@ export class SqliteCollectionRepository implements CollectionRepository {
     return rows.map(fromRow);
   }
 
+  async listByProjectIdForSync(projectId: string): Promise<Collection[]> {
+    const rows = await this.db.select<CollectionRow[]>(
+      `SELECT id, project_id, name, description, sort_order, created_at, updated_at, deleted_at
+       FROM collections
+       WHERE project_id = $1
+       ORDER BY sort_order ASC, created_at ASC`,
+      [projectId],
+    );
+    return rows.map(fromRow);
+  }
+
   async getById(id: string): Promise<Collection | null> {
     const rows = await this.db.select<CollectionRow[]>(
       `SELECT id, project_id, name, description, sort_order, created_at, updated_at, deleted_at
@@ -67,6 +78,10 @@ export class SqliteCollectionRepository implements CollectionRepository {
       "UPDATE collections SET deleted_at = $1, updated_at = $1 WHERE id = $2",
       [deletedAt, id],
     );
+  }
+
+  async hardDelete(id: string): Promise<void> {
+    await this.db.execute("DELETE FROM collections WHERE id = $1", [id]);
   }
 }
 

@@ -31,6 +31,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             secrets::encrypt_secret,
             secrets::decrypt_secret,
+            secrets::store_sync_key,
+            secrets::load_sync_key,
+            secrets::clear_sync_key,
             auth::hash_password,
             auth::verify_password
         ])

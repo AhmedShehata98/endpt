@@ -9,7 +9,10 @@ export class DuplicateEnvKeyError extends Error {
 
 export interface EnvironmentVariableRepository {
   listByUserId(userId: string | null): Promise<EnvironmentVariable[]>;
+  /** Includes soft-deleted rows for sync push/merge. */
+  listByUserIdForSync(userId: string | null): Promise<EnvironmentVariable[]>;
   getById(id: string): Promise<EnvironmentVariable | null>;
   save(variable: EnvironmentVariable): Promise<EnvironmentVariable>;
   softDelete(id: string, deletedAt: string): Promise<void>;
+  hardDelete(id: string): Promise<void>;
 }

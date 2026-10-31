@@ -8,6 +8,12 @@ import {
   createPasswordHasher,
   type AppRepositories,
 } from "@modules/persistence";
+import {
+  SyncService,
+  createDefaultSyncRemote,
+  createSyncKeyStore,
+  type SyncRemote,
+} from "@modules/sync";
 
 let reposPromise: Promise<AppRepositories> | null = null;
 
@@ -39,4 +45,22 @@ export function createAccountService(repos: AppRepositories): AccountService {
 
 export function createProjectService(repos: AppRepositories): ProjectService {
   return new ProjectService(repos.projects, repos.collections, repos.savedRequests);
+}
+
+export function createSyncService(
+  repos: AppRepositories,
+  remote: SyncRemote = createDefaultSyncRemote(),
+): SyncService {
+  return new SyncService(
+    remote,
+    createSyncKeyStore(),
+    repos.userAccounts,
+    repos.sessions,
+    repos.userSettings,
+    repos.projects,
+    repos.collections,
+    repos.savedRequests,
+    repos.environmentVariables,
+    createPasswordHasher(),
+  );
 }

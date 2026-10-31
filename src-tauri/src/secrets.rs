@@ -69,3 +69,35 @@ pub fn decrypt_secret(payload: String) -> Result<String, String> {
 
     String::from_utf8(plaintext).map_err(|e| e.to_string())
 }
+
+fn sync_key_entry(user_id: &str) -> Result<Entry, String> {
+    Entry::new(SERVICE, &format!("sync-key:{user_id}")).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn store_sync_key(user_id: String, key_material: String) -> Result<(), String> {
+    let entry = sync_key_entry(&user_id)?;
+    entry
+        .set_password(&key_material)
+        .map_err(|e| format!("failed to store sync key: {e}"))
+}
+
+#[tauri::command]
+pub fn load_sync_key(user_id: String) -> Result<Option<String>, String> {
+    let entry = sync_key_entry(&user_id)?;
+    match entry.get_password() {
+        Ok(value) => Ok(Some(value)),
+        Err(keyring::Error::NoEntry) => Ok(None),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+pub fn clear_sync_key(user_id: String) -> Result<(), String> {
+    let entry = sync_key_entry(&user_id)?;
+    match entry.delete_credential() {
+        Ok(()) => Ok(()),
+        Err(keyring::Error::NoEntry) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}

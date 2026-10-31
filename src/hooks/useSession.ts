@@ -137,6 +137,13 @@ export function useSession({ service }: UseSessionOptions) {
     setError(null);
   }, [service]);
 
+  const patchAccount = useCallback(
+    (patch: Partial<PublicAccount>) => {
+      setAccount((prev) => (prev ? { ...prev, ...patch } : prev));
+    },
+    [],
+  );
+
   const displayName = account
     ? displayNameFromEmail(account.email, account.displayName)
     : null;
@@ -153,5 +160,6 @@ export function useSession({ service }: UseSessionOptions) {
     signIn,
     signUp,
     signOut,
+    patchAccount,
   };
 }

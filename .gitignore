@@ -6,11 +6,26 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+firebase-debug.log*
+firestore-debug.log*
 
 node_modules
 dist
 dist-ssr
 *.local
+
+# Env / secrets (keep .env.example tracked)
+.env
+.env.*
+!.env.example
+
+# Firebase local cache (commit firebase.json, firestore.rules, .firebaserc)
+.firebase/
+
+# Local agent / IDE tooling
+.agents/
+.claude/
+skills-lock.json
 
 # Editor directories and files
 .vscode/*

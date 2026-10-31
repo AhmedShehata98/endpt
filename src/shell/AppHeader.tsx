@@ -15,6 +15,7 @@ interface AppHeaderProps {
   onOpenVariables: () => void;
   onSignIn: () => void;
   onSignOut: () => void;
+  onRetrySync?: () => void;
   className?: string;
 }
 
@@ -30,6 +31,7 @@ export function AppHeader({
   onOpenVariables,
   onSignIn,
   onSignOut,
+  onRetrySync,
   className,
 }: AppHeaderProps) {
   return (
@@ -78,7 +80,7 @@ export function AppHeader({
           )}
         </Button>
 
-        <SyncStatus status={syncStatus} />
+        <SyncStatus status={syncStatus} onRetry={onRetrySync} />
 
         {signedIn ? (
           <div className="flex items-center gap-1.5">

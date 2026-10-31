@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AccountService } from "@modules/account";
 import type { ProjectService } from "@modules/project";
 import type { AppRepositories } from "@modules/persistence";
-import type { SyncStatus } from "@modules/sync";
+import type { SyncService, SyncStatus } from "@modules/sync";
 import {
   createAccountService,
   createProjectService,
+  createSyncService,
   getAppRepositories,
 } from "@/app/composition";
 import { isAuthView, type AppView } from "@/app/navigation";
@@ -14,11 +15,13 @@ import { useCollapsedSidebar } from "@/hooks/useCollapsedSidebar";
 import { useEnvironmentVariables } from "@/hooks/useEnvironmentVariables";
 import { useProjects } from "@/hooks/useProjects";
 import { useSession } from "@/hooks/useSession";
+import { useSync } from "@/hooks/useSync";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWorkspaceDraft } from "@/hooks/useWorkspaceDraft";
 import { useWorkspaceSend } from "@/hooks/useWorkspaceSend";
 import { AppHeader } from "@/shell/AppHeader";
 import { Sidebar } from "@/shell/Sidebar";
+import { CloudLinkDialog } from "@/views/CloudLinkDialog";
 import { CollectionsView } from "@/views/CollectionsView";
 import { EnvironmentView } from "@/views/EnvironmentView";
 import { ResponseFullscreen } from "@/views/ResponseFullscreen";
@@ -29,12 +32,19 @@ import { SignUpView } from "@/views/SignUpView";
 import { VariablesDrawer } from "@/views/VariablesDrawer";
 import { WorkspaceView } from "@/views/WorkspaceView";
 
-const PHASE0_SYNC_STATUS: SyncStatus = "local-only";
+const SYNC_STATUS_LABELS: Record<SyncStatus, string> = {
+  "local-only": "Local only",
+  offline: "Offline",
+  syncing: "Syncing…",
+  synced: "Synced",
+  failed: "Sync failed",
+};
 
 export default function App() {
   const [repos, setRepos] = useState<AppRepositories | null>(null);
   const [accountService, setAccountService] = useState<AccountService | null>(null);
   const [projectService, setProjectService] = useState<ProjectService | null>(null);
+  const [syncService, setSyncService] = useState<SyncService | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [persistError, setPersistError] = useState<string | null>(null);
   const [copyToast, setCopyToast] = useState<string | null>(null);
@@ -86,6 +96,22 @@ export default function App() {
     userId: session.account?.id ?? null,
     onError: onPersistError,
   });
+  const patchAccount = session.patchAccount;
+  const refreshProjects = projects.refresh;
+  const onAccountSynced = useCallback(
+    (patch: { lastSyncedAt: string; cloudUserId?: string | null }) => {
+      patchAccount(patch);
+      void refreshProjects();
+    },
+    [patchAccount, refreshProjects],
+  );
+  const sync = useSync({
+    service: syncService,
+    signedIn: session.signedIn,
+    account: session.account,
+    syncEnabled: preferences.syncEnabled,
+    onAccountSynced,
+  });
   const {
     send,
     sendDraft,
@@ -109,6 +135,7 @@ export default function App() {
         setRepos(created);
         setAccountService(createAccountService(created));
         setProjectService(createProjectService(created));
+        setSyncService(createSyncService(created));
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -299,7 +326,7 @@ export default function App() {
           breadcrumb={breadcrumb}
           saveState={saveState}
           unresolvedCount={unresolvedCount}
-          syncStatus={PHASE0_SYNC_STATUS}
+          syncStatus={sync.status}
           signedIn={headerSignedIn}
           displayName={session.displayName}
           onSaveRequest={handleSaveRequestClick}
@@ -309,6 +336,7 @@ export default function App() {
             setView("sign-in");
           }}
           onSignOut={handleSignOut}
+          onRetrySync={sync.retry}
         />
 
         <main className="min-h-0 flex-1 overflow-hidden">
@@ -372,9 +400,16 @@ export default function App() {
                   signedIn={session.signedIn}
                   displayName={session.displayName}
                   email={session.account?.email ?? null}
-                  lastSyncedAt={session.account?.lastSyncedAt ?? null}
+                  lastSyncedAt={sync.lastSyncedAt}
+                  syncStatusLabel={
+                    sync.message && sync.status === "failed"
+                      ? `${SYNC_STATUS_LABELS[sync.status]} — ${sync.message}`
+                      : SYNC_STATUS_LABELS[sync.status]
+                  }
+                  syncBusy={sync.busy}
                   preferences={preferences}
                   onPreferencesChange={updatePreferences}
+                  onSyncNow={sync.syncNow}
                   onSignIn={() => {
                     session.setError(null);
                     setView("sign-in");
@@ -414,6 +449,15 @@ export default function App() {
         onCreateProject={projects.createProject}
         onCreateCollection={projects.createCollection}
         onSave={handleSaveDialogSave}
+      />
+
+      <CloudLinkDialog
+        open={sync.linkOpen}
+        email={session.account?.email ?? ""}
+        busy={sync.busy}
+        error={sync.linkError}
+        onClose={sync.closeLink}
+        onConfirm={sync.confirmLink}
       />
 
       {responseForView && (

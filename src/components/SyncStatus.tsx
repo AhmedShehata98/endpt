@@ -19,10 +19,11 @@ const dots: Record<SyncStatusKind, string> = {
 
 interface SyncStatusProps {
   status: SyncStatusKind;
+  onRetry?: () => void;
   className?: string;
 }
 
-export function SyncStatus({ status, className }: SyncStatusProps) {
+export function SyncStatus({ status, onRetry, className }: SyncStatusProps) {
   return (
     <div
       className={cn(
@@ -33,6 +34,15 @@ export function SyncStatus({ status, className }: SyncStatusProps) {
     >
       <span className={cn("size-1.5 rounded-full", dots[status])} aria-hidden />
       <span>{labels[status]}</span>
+      {status === "failed" && onRetry ? (
+        <button
+          type="button"
+          className="text-accent underline-offset-2 hover:underline"
+          onClick={onRetry}
+        >
+          Retry
+        </button>
+      ) : null}
     </div>
   );
 }

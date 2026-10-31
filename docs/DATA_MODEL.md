@@ -236,10 +236,13 @@ FR-16, FR-18, AC-15, AC-16, NFR-02, NFR-03.
 
 | Concern | Approach |
 |---------|----------|
-| Source of truth | Local disk while offline |
+| Source of truth | Local disk (SQLite) while offline |
+| Remote | Firebase Auth + Cloud Firestore ([ADR-006](./adr/ADR-006-firebase-sync.md)) |
+| Paths | `users/{cloudUserId}/settings\|projects\|collections\|savedRequests\|environmentVariables/{id}` |
+| Cloud link | Same email+password as local account on first sync; sets `cloudUserId` |
 | Syncable | UserSettings, Project, Collection, SavedRequest, EnvironmentVariable |
 | Local-only | Session, AdHocRequest, ResponseView, `UserAccount.passwordHash` |
-| Secrets | Encrypt env values and auth fields at rest; TLS in transit for sync |
+| Secrets | Encrypt env values and auth fields at rest; TLS in transit; client-encrypt secrets before upload |
 | Conflicts | Last-write-wins per entity via `updatedAt` (single-user; no team edit) |
 | Deletes | Soft-delete via `deletedAt`, then purge after sync |
 | Unsigned / offline | Full build-send-save-local and env management without network |
