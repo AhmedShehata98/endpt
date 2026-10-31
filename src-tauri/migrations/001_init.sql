@@ -74,9 +74,9 @@ CREATE TABLE IF NOT EXISTS ad_hoc_requests (
   updated_at TEXT NOT NULL
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_ad_hoc_user
-  ON ad_hoc_requests(user_id)
-  WHERE user_id IS NOT NULL;
+-- One draft per owner; guest rows collapse on empty-string sentinel.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ad_hoc_owner
+  ON ad_hoc_requests ((CASE WHEN user_id IS NULL THEN '' ELSE user_id END));
 
 CREATE TABLE IF NOT EXISTS environment_variables (
   id TEXT PRIMARY KEY NOT NULL,

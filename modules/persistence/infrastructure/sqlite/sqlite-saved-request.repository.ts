@@ -1,8 +1,9 @@
-import type { RequestDraft, SavedRequest } from "@modules/request";
+import type { SavedRequest } from "@modules/request";
 import type { SavedRequestRepository } from "@modules/request/ports/saved-request.repository";
 import type { SecretCipher } from "../../ports/secret-cipher.interface";
 import { decryptDraft, encryptDraft } from "../secrets/draft-secrets";
 import type { SqlDatabase } from "./database";
+import { parseStoredDraft } from "./parse-stored-draft";
 
 interface SavedRow {
   id: string;
@@ -74,7 +75,7 @@ export class SqliteSavedRequestRepository implements SavedRequestRepository {
   }
 
   private async fromRow(row: SavedRow): Promise<SavedRequest> {
-    const draft = JSON.parse(row.draft_json) as RequestDraft;
+    const draft = parseStoredDraft(row.draft_json);
     return {
       id: row.id,
       collectionId: row.collection_id,

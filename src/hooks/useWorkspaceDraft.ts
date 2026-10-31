@@ -2,30 +2,51 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   createEmptyDraft,
   type AdHocRequest,
+  type AdHocRequestRepository,
   type HttpMethod,
   type RequestDraft,
 } from "@modules/request";
-import type { AdHocRequestRepository } from "@modules/request";
-import { MOCK_DRAFT } from "@/app/mock-data";
 import { debounce } from "@/lib/debounce";
+import { nowIso } from "@/lib/time";
 
 const DRAFT_DEBOUNCE_MS = 400;
 const GUEST_DRAFT_ID = "ad-hoc-guest";
 
-function nowIso(): string {
-  return new Date().toISOString();
+type DebouncedPersist = ReturnType<typeof debounce<[RequestDraft]>>;
+
+interface UseWorkspaceDraftOptions {
+  defaultMethod: HttpMethod;
+  repository: AdHocRequestRepository | null;
+  onPersistError?: (message: string) => void;
 }
 
-export function useWorkspaceDraft(
-  defaultMethod: HttpMethod,
-  repository: AdHocRequestRepository | null,
-) {
-  const [draft, setDraftState] = useState<RequestDraft>(MOCK_DRAFT);
+export function useWorkspaceDraft({
+  defaultMethod,
+  repository,
+  onPersistError,
+}: UseWorkspaceDraftOptions) {
+  const [draft, setDraftState] = useState<RequestDraft>(() =>
+    createEmptyDraft(defaultMethod),
+  );
   const [ready, setReady] = useState(false);
   const [adHocId, setAdHocId] = useState(GUEST_DRAFT_ID);
+  const dirtyRef = useRef(false);
+  const onPersistErrorRef = useRef(onPersistError);
+  const persistRef = useRef<(next: RequestDraft) => Promise<void>>(async () => {});
+  const debouncedPersistRef = useRef<DebouncedPersist | null>(null);
 
-  const persist = useCallback(
-    async (next: RequestDraft) => {
+  useEffect(() => {
+    onPersistErrorRef.current = onPersistError;
+  }, [onPersistError]);
+
+  const reportPersistError = useCallback((error: unknown) => {
+    const message =
+      error instanceof Error ? error.message : "Failed to save request draft";
+    onPersistErrorRef.current?.(message);
+  }, []);
+
+  useEffect(() => {
+    persistRef.current = async (next: RequestDraft) => {
       if (!repository) return;
       const record: AdHocRequest = {
         id: adHocId,
@@ -33,23 +54,20 @@ export function useWorkspaceDraft(
         draft: next,
         updatedAt: nowIso(),
       };
-      await repository.save(record);
-    },
-    [adHocId, repository],
-  );
-
-  const debouncedPersist = useRef(
-    debounce((next: RequestDraft) => {
-      void persist(next);
-    }, DRAFT_DEBOUNCE_MS),
-  );
+      try {
+        await repository.save(record);
+      } catch (error) {
+        reportPersistError(error);
+      }
+    };
+  }, [adHocId, repository, reportPersistError]);
 
   useEffect(() => {
-    debouncedPersist.current = debounce((next: RequestDraft) => {
-      void persist(next);
+    debouncedPersistRef.current = debounce((next: RequestDraft) => {
+      void persistRef.current(next);
     }, DRAFT_DEBOUNCE_MS);
-    return () => debouncedPersist.current.cancel();
-  }, [persist]);
+    return () => debouncedPersistRef.current?.cancel();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,54 +77,65 @@ export function useWorkspaceDraft(
         setReady(false);
         return;
       }
-      const existing = await repository.getByUserId(null);
-      if (cancelled) return;
-      if (existing) {
-        setAdHocId(existing.id);
-        setDraftState(existing.draft);
-      } else {
-        const seed: AdHocRequest = {
-          id: GUEST_DRAFT_ID,
-          userId: null,
-          draft: MOCK_DRAFT,
-          updatedAt: nowIso(),
-        };
-        await repository.save(seed);
-        if (cancelled) return;
-        setAdHocId(seed.id);
-        setDraftState(seed.draft);
+
+      try {
+        const existing = await repository.getByUserId(null);
+        if (cancelled || dirtyRef.current) return;
+
+        if (existing) {
+          setAdHocId(existing.id);
+          setDraftState(existing.draft);
+        } else {
+          const empty = createEmptyDraft(defaultMethod);
+          const seed: AdHocRequest = {
+            id: GUEST_DRAFT_ID,
+            userId: null,
+            draft: empty,
+            updatedAt: nowIso(),
+          };
+          await repository.save(seed);
+          if (cancelled || dirtyRef.current) return;
+          setAdHocId(seed.id);
+          setDraftState(seed.draft);
+        }
+        setReady(true);
+      } catch (error) {
+        if (!cancelled) {
+          reportPersistError(error);
+          setReady(false);
+        }
       }
-      setReady(true);
     }
 
     void load();
     return () => {
       cancelled = true;
     };
-  }, [repository]);
+  }, [defaultMethod, repository, reportPersistError]);
 
   useEffect(() => {
-    const flush = () => debouncedPersist.current.flush();
+    const flush = () => debouncedPersistRef.current?.flush();
     window.addEventListener("pagehide", flush);
-    window.addEventListener("blur", flush);
     return () => {
       window.removeEventListener("pagehide", flush);
-      window.removeEventListener("blur", flush);
       flush();
     };
   }, []);
 
-  const setDraft = useCallback((next: RequestDraft | ((prev: RequestDraft) => RequestDraft)) => {
-    setDraftState((prev) => {
-      const value = typeof next === "function" ? next(prev) : next;
-      debouncedPersist.current(value);
-      return value;
-    });
-  }, []);
+  const setDraft = useCallback(
+    (next: RequestDraft | ((prev: RequestDraft) => RequestDraft)) => {
+      dirtyRef.current = true;
+      setDraftState((prev) => {
+        const value = typeof next === "function" ? next(prev) : next;
+        debouncedPersistRef.current?.(value);
+        return value;
+      });
+    },
+    [],
+  );
 
   const startNewRequest = useCallback(() => {
-    const empty = createEmptyDraft(defaultMethod);
-    setDraft(empty);
+    setDraft(createEmptyDraft(defaultMethod));
   }, [defaultMethod, setDraft]);
 
   const openSavedRequest = useCallback(

@@ -4,6 +4,7 @@ import type { SyncStatus } from "@modules/sync";
 import { getAppRepositories } from "@/app/composition";
 import { isAuthView, type AppView } from "@/app/navigation";
 import { MOCK_RESPONSE } from "@/app/mock-data";
+import { Toast } from "@/components/Toast";
 import { useCollapsedSidebar } from "@/hooks/useCollapsedSidebar";
 import { useEnvironmentVariables } from "@/hooks/useEnvironmentVariables";
 import { useSession } from "@/hooks/useSession";
@@ -24,40 +25,65 @@ const PHASE0_SYNC_STATUS: SyncStatus = "local-only";
 
 export default function App() {
   const [repos, setRepos] = useState<AppRepositories | null>(null);
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [persistError, setPersistError] = useState<string | null>(null);
   const [view, setView] = useState<AppView>("workspace");
   const [variablesOpen, setVariablesOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const [response] = useState(MOCK_RESPONSE);
 
+  const onPersistError = useCallback((message: string) => {
+    setPersistError(message);
+  }, []);
+
   const collapsed = useCollapsedSidebar();
   const session = useSession();
   const { preferences, updatePreferences, setSyncEnabled } = useUserPreferences();
-  const { draft, setDraft, startNewRequest, openSavedRequest } = useWorkspaceDraft(
-    preferences.defaultHttpMethod,
-    repos?.adHocRequests ?? null,
-  );
-  const { variables, setVariables } = useEnvironmentVariables(
-    repos?.environmentVariables ?? null,
-  );
+  const { draft, setDraft, startNewRequest, openSavedRequest, ready: draftReady } =
+    useWorkspaceDraft({
+      defaultMethod: preferences.defaultHttpMethod,
+      repository: repos?.adHocRequests ?? null,
+      onPersistError,
+    });
+  const { variables, setVariables, ready: envReady } = useEnvironmentVariables({
+    repository: repos?.environmentVariables ?? null,
+    onPersistError,
+  });
+
+  const storageReady = draftReady && envReady;
 
   useEffect(() => {
     let cancelled = false;
-    void getAppRepositories().then((created) => {
-      if (!cancelled) setRepos(created);
-    });
+    void getAppRepositories()
+      .then((created) => {
+        if (!cancelled) setRepos(created);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        const message =
+          error instanceof Error ? error.message : "Failed to open local storage";
+        setBootError(message);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!persistError) return;
+    const timer = window.setTimeout(() => setPersistError(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [persistError]);
 
   const goWorkspace = useCallback(() => {
     setView("workspace");
   }, []);
 
   const createNewRequest = useCallback(() => {
+    if (!storageReady) return;
     startNewRequest();
     setView("workspace");
-  }, [startNewRequest]);
+  }, [startNewRequest, storageReady]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -70,6 +96,14 @@ export default function App() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [createNewRequest]);
+
+  if (bootError) {
+    return (
+      <div className="flex h-full items-center justify-center bg-bg-app p-6 text-text-primary">
+        <Toast message={bootError} tone="error" />
+      </div>
+    );
+  }
 
   if (isAuthView(view)) {
     return view === "sign-in" ? (
@@ -119,41 +153,49 @@ export default function App() {
         />
 
         <main className="min-h-0 flex-1 overflow-hidden">
-          {view === "workspace" && (
-            <WorkspaceView
-              draft={draft}
-              onDraftChange={setDraft}
-              response={response}
-              wrapLines={preferences.wrapResponseLines}
-              onOpenFullscreen={() => setFullscreenOpen(true)}
-            />
-          )}
-          {view === "collections" && (
-            <CollectionsView
-              signedIn={session.signedIn}
-              onSignIn={() => setView("sign-in")}
-              onOpenRequest={(name, method) => {
-                openSavedRequest(name, method);
-                goWorkspace();
-              }}
-            />
-          )}
-          {view === "environment" && (
-            <EnvironmentView variables={variables} onVariablesChange={setVariables} />
-          )}
-          {view === "settings" && (
-            <SettingsView
-              signedIn={session.signedIn}
-              preferences={preferences}
-              onPreferencesChange={updatePreferences}
-              onSignIn={() => setView("sign-in")}
-            />
+          {!storageReady ? (
+            <div className="flex h-full items-center justify-center text-sm text-text-secondary">
+              Loading local data…
+            </div>
+          ) : (
+            <>
+              {view === "workspace" && (
+                <WorkspaceView
+                  draft={draft}
+                  onDraftChange={setDraft}
+                  response={response}
+                  wrapLines={preferences.wrapResponseLines}
+                  onOpenFullscreen={() => setFullscreenOpen(true)}
+                />
+              )}
+              {view === "collections" && (
+                <CollectionsView
+                  signedIn={session.signedIn}
+                  onSignIn={() => setView("sign-in")}
+                  onOpenRequest={(name, method) => {
+                    openSavedRequest(name, method);
+                    goWorkspace();
+                  }}
+                />
+              )}
+              {view === "environment" && (
+                <EnvironmentView variables={variables} onVariablesChange={setVariables} />
+              )}
+              {view === "settings" && (
+                <SettingsView
+                  signedIn={session.signedIn}
+                  preferences={preferences}
+                  onPreferencesChange={updatePreferences}
+                  onSignIn={() => setView("sign-in")}
+                />
+              )}
+            </>
           )}
         </main>
       </div>
 
       <VariablesDrawer
-        open={variablesOpen}
+        open={variablesOpen && storageReady}
         variables={variables}
         onClose={() => setVariablesOpen(false)}
       />
@@ -165,6 +207,12 @@ export default function App() {
         onWrapLinesChange={(wrapResponseLines) => updatePreferences({ wrapResponseLines })}
         onClose={() => setFullscreenOpen(false)}
       />
+
+      {persistError ? (
+        <div className="pointer-events-none fixed bottom-4 right-4 z-50">
+          <Toast message={persistError} tone="error" />
+        </div>
+      ) : null}
     </div>
   );
 }

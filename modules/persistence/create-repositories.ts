@@ -40,7 +40,9 @@ export interface AppRepositories {
   userSettings: UserSettingsRepository;
 }
 
-export function createMemoryRepositories(cipher: SecretCipher = new MemorySecretCipher()): AppRepositories {
+export function createMemoryRepositories(
+  cipher: SecretCipher = new MemorySecretCipher(),
+): AppRepositories {
   return {
     backend: "memory",
     cipher,
@@ -55,27 +57,27 @@ export function createMemoryRepositories(cipher: SecretCipher = new MemorySecret
   };
 }
 
+/**
+ * Desktop (Tauri): SQLite + keychain cipher. Failures propagate.
+ * Vite-only / tests: in-memory (no disk).
+ */
 export async function createAppRepositories(): Promise<AppRepositories> {
   if (!isTauriRuntime()) {
     return createMemoryRepositories();
   }
 
-  try {
-    const db = await loadEndptDatabase();
-    const cipher = new TauriSecretCipher();
-    return {
-      backend: "sqlite",
-      cipher,
-      adHocRequests: new SqliteAdHocRequestRepository(db, cipher),
-      savedRequests: new SqliteSavedRequestRepository(db, cipher),
-      environmentVariables: new SqliteEnvironmentVariableRepository(db, cipher),
-      projects: new SqliteProjectRepository(db),
-      collections: new SqliteCollectionRepository(db),
-      userAccounts: new SqliteUserAccountRepository(db),
-      sessions: new SqliteSessionRepository(db),
-      userSettings: new SqliteUserSettingsRepository(db),
-    };
-  } catch {
-    return createMemoryRepositories();
-  }
+  const db = await loadEndptDatabase();
+  const cipher = new TauriSecretCipher();
+  return {
+    backend: "sqlite",
+    cipher,
+    adHocRequests: new SqliteAdHocRequestRepository(db, cipher),
+    savedRequests: new SqliteSavedRequestRepository(db, cipher),
+    environmentVariables: new SqliteEnvironmentVariableRepository(db, cipher),
+    projects: new SqliteProjectRepository(db),
+    collections: new SqliteCollectionRepository(db),
+    userAccounts: new SqliteUserAccountRepository(db),
+    sessions: new SqliteSessionRepository(db, cipher),
+    userSettings: new SqliteUserSettingsRepository(db),
+  };
 }

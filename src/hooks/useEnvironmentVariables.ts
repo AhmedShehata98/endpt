@@ -1,41 +1,75 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { EnvironmentVariable } from "@modules/environment";
-import type { EnvironmentVariableRepository } from "@modules/environment";
-import { MOCK_ENV_VARS } from "@/app/mock-data";
+import type {
+  EnvironmentVariable,
+  EnvironmentVariableRepository,
+} from "@modules/environment";
 import { debounce } from "@/lib/debounce";
+import { nowIso } from "@/lib/time";
 
 const ENV_DEBOUNCE_MS = 400;
 
-function nowIso(): string {
-  return new Date().toISOString();
+type DebouncedPersist = ReturnType<typeof debounce<[EnvironmentVariable[]]>>;
+
+interface UseEnvironmentVariablesOptions {
+  repository: EnvironmentVariableRepository | null;
+  onPersistError?: (message: string) => void;
 }
 
-export function useEnvironmentVariables(repository: EnvironmentVariableRepository | null) {
+export function useEnvironmentVariables({
+  repository,
+  onPersistError,
+}: UseEnvironmentVariablesOptions) {
   const [variables, setVariablesState] = useState<EnvironmentVariable[]>([]);
   const [ready, setReady] = useState(false);
-
-  const persistAll = useCallback(
-    async (next: EnvironmentVariable[]) => {
-      if (!repository) return;
-      for (const variable of next) {
-        await repository.save({ ...variable, updatedAt: nowIso(), deletedAt: null });
-      }
-    },
-    [repository],
+  const knownIdsRef = useRef<Set<string>>(new Set());
+  const onPersistErrorRef = useRef(onPersistError);
+  const persistAllRef = useRef<(next: EnvironmentVariable[]) => Promise<void>>(
+    async () => {},
   );
-
-  const debouncedPersist = useRef(
-    debounce((next: EnvironmentVariable[]) => {
-      void persistAll(next);
-    }, ENV_DEBOUNCE_MS),
-  );
+  const debouncedPersistRef = useRef<DebouncedPersist | null>(null);
 
   useEffect(() => {
-    debouncedPersist.current = debounce((next: EnvironmentVariable[]) => {
-      void persistAll(next);
+    onPersistErrorRef.current = onPersistError;
+  }, [onPersistError]);
+
+  const reportPersistError = useCallback((error: unknown) => {
+    const message =
+      error instanceof Error ? error.message : "Failed to save environment variables";
+    onPersistErrorRef.current?.(message);
+  }, []);
+
+  useEffect(() => {
+    persistAllRef.current = async (next: EnvironmentVariable[]) => {
+      if (!repository) return;
+      const stamp = nowIso();
+      const nextIds = new Set(next.map((variable) => variable.id));
+
+      try {
+        for (const id of knownIdsRef.current) {
+          if (!nextIds.has(id)) {
+            await repository.softDelete(id, stamp);
+          }
+        }
+        for (const variable of next) {
+          await repository.save({
+            ...variable,
+            updatedAt: stamp,
+            deletedAt: null,
+          });
+        }
+        knownIdsRef.current = nextIds;
+      } catch (error) {
+        reportPersistError(error);
+      }
+    };
+  }, [repository, reportPersistError]);
+
+  useEffect(() => {
+    debouncedPersistRef.current = debounce((next: EnvironmentVariable[]) => {
+      void persistAllRef.current(next);
     }, ENV_DEBOUNCE_MS);
-    return () => debouncedPersist.current.cancel();
-  }, [persistAll]);
+    return () => debouncedPersistRef.current?.cancel();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,29 +79,29 @@ export function useEnvironmentVariables(repository: EnvironmentVariableRepositor
         setReady(false);
         return;
       }
-      const existing = await repository.listByUserId(null);
-      if (cancelled) return;
-      if (existing.length === 0) {
-        const seeded = MOCK_ENV_VARS.map((v) => ({ ...v, updatedAt: nowIso() }));
-        for (const variable of seeded) {
-          await repository.save(variable);
-        }
+
+      try {
+        const existing = await repository.listByUserId(null);
         if (cancelled) return;
-        setVariablesState(seeded);
-      } else {
+        knownIdsRef.current = new Set(existing.map((variable) => variable.id));
         setVariablesState(existing);
+        setReady(true);
+      } catch (error) {
+        if (!cancelled) {
+          reportPersistError(error);
+          setReady(false);
+        }
       }
-      setReady(true);
     }
 
     void load();
     return () => {
       cancelled = true;
     };
-  }, [repository]);
+  }, [repository, reportPersistError]);
 
   useEffect(() => {
-    const flush = () => debouncedPersist.current.flush();
+    const flush = () => debouncedPersistRef.current?.flush();
     window.addEventListener("pagehide", flush);
     return () => {
       window.removeEventListener("pagehide", flush);
@@ -83,7 +117,7 @@ export function useEnvironmentVariables(repository: EnvironmentVariableRepositor
     ) => {
       setVariablesState((prev) => {
         const value = typeof next === "function" ? next(prev) : next;
-        debouncedPersist.current(value);
+        debouncedPersistRef.current?.(value);
         return value;
       });
     },

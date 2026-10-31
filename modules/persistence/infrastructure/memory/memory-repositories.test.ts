@@ -143,7 +143,7 @@ describe("memory repositories", () => {
     await repos.sessions.save({
       id: "s1",
       userId: "u1",
-      accessToken: null,
+      accessToken: "cloud-token",
       createdAt: "2026-01-01T00:00:00.000Z",
       expiresAt: null,
     });
@@ -159,7 +159,7 @@ describe("memory repositories", () => {
     });
 
     expect((await repos.userAccounts.getByEmail("a@example.com"))?.id).toBe("u1");
-    expect((await repos.sessions.getActive())?.userId).toBe("u1");
+    expect((await repos.sessions.getActive())?.accessToken).toBe("cloud-token");
     expect((await repos.userSettings.getByUserId("u1"))?.theme).toBe("dark");
   });
 });

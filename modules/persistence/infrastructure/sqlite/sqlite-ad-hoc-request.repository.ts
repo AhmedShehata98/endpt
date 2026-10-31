@@ -1,8 +1,9 @@
-import type { AdHocRequest, RequestDraft } from "@modules/request";
+import type { AdHocRequest } from "@modules/request";
 import type { AdHocRequestRepository } from "@modules/request/ports/ad-hoc-request.repository";
 import type { SecretCipher } from "../../ports/secret-cipher.interface";
 import { decryptDraft, encryptDraft } from "../secrets/draft-secrets";
 import type { SqlDatabase } from "./database";
+import { parseStoredDraft } from "./parse-stored-draft";
 
 interface AdHocRow {
   id: string;
@@ -10,6 +11,8 @@ interface AdHocRow {
   draft_json: string;
   updated_at: string;
 }
+
+const GUEST_DRAFT_ID = "ad-hoc-guest";
 
 export class SqliteAdHocRequestRepository implements AdHocRequestRepository {
   constructor(
@@ -34,7 +37,9 @@ export class SqliteAdHocRequestRepository implements AdHocRequestRepository {
   }
 
   async save(request: AdHocRequest): Promise<AdHocRequest> {
-    const encrypted = await encryptDraft(request.draft, this.cipher);
+    const normalized =
+      request.userId == null ? { ...request, id: GUEST_DRAFT_ID } : request;
+    const encrypted = await encryptDraft(normalized.draft, this.cipher);
     const draftJson = JSON.stringify(encrypted);
 
     await this.db.execute(
@@ -44,10 +49,10 @@ export class SqliteAdHocRequestRepository implements AdHocRequestRepository {
          user_id = excluded.user_id,
          draft_json = excluded.draft_json,
          updated_at = excluded.updated_at`,
-      [request.id, request.userId, draftJson, request.updatedAt],
+      [normalized.id, normalized.userId, draftJson, normalized.updatedAt],
     );
 
-    return request;
+    return normalized;
   }
 
   async delete(id: string): Promise<void> {
@@ -55,7 +60,7 @@ export class SqliteAdHocRequestRepository implements AdHocRequestRepository {
   }
 
   private async fromRow(row: AdHocRow): Promise<AdHocRequest> {
-    const draft = JSON.parse(row.draft_json) as RequestDraft;
+    const draft = parseStoredDraft(row.draft_json);
     return {
       id: row.id,
       userId: row.user_id,

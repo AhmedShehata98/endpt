@@ -1,6 +1,8 @@
 import type { AdHocRequest } from "@modules/request";
 import type { AdHocRequestRepository } from "@modules/request/ports/ad-hoc-request.repository";
 
+const GUEST_DRAFT_ID = "ad-hoc-guest";
+
 function sameUser(a: string | null, b: string | null): boolean {
   return a === b;
 }
@@ -16,13 +18,15 @@ export class MemoryAdHocRequestRepository implements AdHocRequestRepository {
   }
 
   async save(request: AdHocRequest): Promise<AdHocRequest> {
+    const normalized =
+      request.userId == null ? { ...request, id: GUEST_DRAFT_ID } : request;
     for (const [id, existing] of this.byId) {
-      if (id !== request.id && sameUser(existing.userId, request.userId)) {
+      if (id !== normalized.id && sameUser(existing.userId, normalized.userId)) {
         this.byId.delete(id);
       }
     }
-    this.byId.set(request.id, structuredClone(request));
-    return structuredClone(request);
+    this.byId.set(normalized.id, structuredClone(normalized));
+    return structuredClone(normalized);
   }
 
   async delete(id: string): Promise<void> {
