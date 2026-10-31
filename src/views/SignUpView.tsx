@@ -3,12 +3,24 @@ import { Button, Input, SecretInput } from "@/components";
 import { AuthScreenLayout } from "@/views/auth/AuthScreenLayout";
 
 interface SignUpViewProps {
-  onSignUp: (email: string, displayName: string) => void;
+  onSignUp: (input: {
+    email: string;
+    password: string;
+    displayName: string;
+  }) => Promise<boolean>;
   onGoSignIn: () => void;
   onContinueWithoutAccount: () => void;
+  busy?: boolean;
+  error?: string | null;
 }
 
-export function SignUpView({ onSignUp, onGoSignIn, onContinueWithoutAccount }: SignUpViewProps) {
+export function SignUpView({
+  onSignUp,
+  onGoSignIn,
+  onContinueWithoutAccount,
+  busy = false,
+  error = null,
+}: SignUpViewProps) {
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +47,7 @@ export function SignUpView({ onSignUp, onGoSignIn, onContinueWithoutAccount }: S
         className="mt-6 space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
-          onSignUp(email || "developer@example.com", displayName || "Developer");
+          void onSignUp({ email, password, displayName });
         }}
       >
         <div>
@@ -48,6 +60,7 @@ export function SignUpView({ onSignUp, onGoSignIn, onContinueWithoutAccount }: S
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Alex Chen"
             autoComplete="nickname"
+            disabled={busy}
           />
         </div>
         <div>
@@ -60,8 +73,9 @@ export function SignUpView({ onSignUp, onGoSignIn, onContinueWithoutAccount }: S
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="developer@example.com"
+            placeholder="you@example.com"
             autoComplete="email"
+            disabled={busy}
           />
         </div>
         <div>
@@ -74,10 +88,16 @@ export function SignUpView({ onSignUp, onGoSignIn, onContinueWithoutAccount }: S
             onChange={setPassword}
             placeholder="••••••••••••"
             aria-label="Password"
+            disabled={busy}
           />
         </div>
-        <Button type="submit" variant="primary" className="h-9 w-full">
-          Create account
+        {error ? (
+          <p className="text-[0.8125rem] text-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <Button type="submit" variant="primary" className="h-9 w-full" disabled={busy}>
+          {busy ? "Creating account…" : "Create account"}
         </Button>
       </form>
     </AuthScreenLayout>

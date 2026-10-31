@@ -5,6 +5,12 @@ interface ResponseHeadersTableProps {
 }
 
 export function ResponseHeadersTable({ headers }: ResponseHeadersTableProps) {
+  if (headers.length === 0) {
+    return (
+      <p className="p-3 text-[0.8125rem] text-text-muted">This response has no headers.</p>
+    );
+  }
+
   return (
     <table className="w-full text-left text-[0.8125rem]">
       <thead className="bg-bg-subtle text-text-muted">

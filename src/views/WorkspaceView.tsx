@@ -1,3 +1,4 @@
+import type { Ref } from "react";
 import { MethodBadge, SplitPanel } from "@/components";
 import type { RequestDraft } from "@modules/request";
 import type { ResponseView } from "@modules/response";
@@ -11,12 +12,15 @@ interface WorkspaceViewProps {
   send: SendState;
   response: ResponseView | null;
   showPreviousResponse: boolean;
-  definedKeys: ReadonlySet<string>;
+  envValues: ReadonlyMap<string, string>;
   wrapLines: boolean;
+  onWrapLinesChange: (wrap: boolean) => void;
   onSend: () => void;
-  onFixVariable: () => void;
+  onFixVariable: (key: string) => void;
   onOpenFullscreen: () => void;
   onTryAgain: () => void;
+  onCopyResult: (ok: boolean) => void;
+  fullscreenTriggerRef: Ref<HTMLButtonElement>;
 }
 
 export function WorkspaceView({
@@ -25,12 +29,15 @@ export function WorkspaceView({
   send,
   response,
   showPreviousResponse,
-  definedKeys,
+  envValues,
   wrapLines,
+  onWrapLinesChange,
   onSend,
   onFixVariable,
   onOpenFullscreen,
   onTryAgain,
+  onCopyResult,
+  fullscreenTriggerRef,
 }: WorkspaceViewProps) {
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -46,19 +53,22 @@ export function WorkspaceView({
             draft={draft}
             onDraftChange={onDraftChange}
             send={send}
-            definedKeys={definedKeys}
+            envValues={envValues}
             onSend={onSend}
             onFixVariable={onFixVariable}
           />
         }
         bottom={
           <ResponsePanel
+            ref={fullscreenTriggerRef}
             send={send}
             response={response}
             showPreviousResponse={showPreviousResponse}
             wrapLines={wrapLines}
+            onWrapLinesChange={onWrapLinesChange}
             onOpenFullscreen={onOpenFullscreen}
             onTryAgain={onTryAgain}
+            onCopyResult={onCopyResult}
           />
         }
       />

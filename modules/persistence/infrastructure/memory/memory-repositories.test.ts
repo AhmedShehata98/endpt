@@ -134,6 +134,7 @@ describe("memory repositories", () => {
       id: "u1",
       email: "a@example.com",
       displayName: "A",
+      passwordHash: "memory$dGVzdA==",
       cloudUserId: null,
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",

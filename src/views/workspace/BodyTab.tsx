@@ -7,8 +7,8 @@ interface BodyTabProps {
   draft: RequestDraft;
   disabled: boolean;
   onDraftChange: (draft: RequestDraft) => void;
-  definedKeys: ReadonlySet<string>;
-  onFixVariable: () => void;
+  envValues: ReadonlyMap<string, string>;
+  onFixVariable: (key: string) => void;
   bodyError?: string | null;
 }
 
@@ -16,7 +16,7 @@ export function BodyTab({
   draft,
   disabled,
   onDraftChange,
-  definedKeys,
+  envValues,
   onFixVariable,
   bodyError = null,
 }: BodyTabProps) {
@@ -64,7 +64,7 @@ export function BodyTab({
           {showError && <p className="text-[0.75rem] text-error">{showError}</p>}
           <PlaceholderHints
             text={draft.body ?? ""}
-            definedKeys={definedKeys}
+            envValues={envValues}
             onFixVariable={onFixVariable}
           />
         </>

@@ -12,3 +12,10 @@ export { DuplicateEnvKeyError } from "./ports/environment-variable.repository";
 export type { EnvBinding, ResolvedDraft } from "./application/resolve-draft";
 export { resolveDraft } from "./application/resolve-draft";
 export { findPlaceholders } from "./application/find-placeholders";
+
+export type { EnvVariableIssue } from "./application/validate-env-variables";
+export {
+  validateEnvVariables,
+  unusedEnvRoles,
+  roleForDefaultKey,
+} from "./application/validate-env-variables";

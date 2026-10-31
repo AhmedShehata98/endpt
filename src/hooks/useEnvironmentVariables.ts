@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type {
-  EnvironmentVariable,
-  EnvironmentVariableRepository,
+import {
+  DuplicateEnvKeyError,
+  type EnvironmentVariable,
+  type EnvironmentVariableRepository,
 } from "@modules/environment";
 import { debounce } from "@/lib/debounce";
 import { nowIso } from "@/lib/time";
@@ -34,7 +35,11 @@ export function useEnvironmentVariables({
 
   const reportPersistError = useCallback((error: unknown) => {
     const message =
-      error instanceof Error ? error.message : "Failed to save environment variables";
+      error instanceof DuplicateEnvKeyError
+        ? "That key is already in use"
+        : error instanceof Error
+          ? error.message
+          : "Failed to save environment variables";
     onPersistErrorRef.current?.(message);
   }, []);
 

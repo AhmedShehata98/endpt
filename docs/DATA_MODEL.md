@@ -30,15 +30,16 @@ Local-first identity. Cloud link is optional (FR-15, FR-16, FR-17). Core workflo
 | Field | Type | Notes |
 |-------|------|--------|
 | `id` | UUID | Local primary key |
-| `email` | string | Sign-up / sign-in identifier |
+| `email` | string | Sign-up / sign-in identifier (stored lowercase) |
 | `displayName` | string \| null | Personal info |
+| `passwordHash` | string | Argon2id PHC string; **local-only, never sync** |
 | `cloudUserId` | string \| null | Set after cloud link; null = local-only |
 | `createdAt` | datetime | |
 | `updatedAt` | datetime | |
 | `lastSyncedAt` | datetime \| null | Last successful cloud sync |
 | `deletedAt` | datetime \| null | Sync tombstone |
 
-Credentials for sign-in are not stored as long-lived plaintext. Prefer OS/keychain or cloud auth tokens; if local password auth is used, store a one-way hash only (never sync plaintext) — NFR-02.
+Credentials for sign-in are never stored as plaintext. Local password auth stores a one-way Argon2 hash only (`passwordHash`); never sync the hash or plaintext — NFR-02.
 
 ### 2.2 Session
 
@@ -237,7 +238,7 @@ FR-16, FR-18, AC-15, AC-16, NFR-02, NFR-03.
 |---------|----------|
 | Source of truth | Local disk while offline |
 | Syncable | UserSettings, Project, Collection, SavedRequest, EnvironmentVariable |
-| Local-only | Session, AdHocRequest, ResponseView |
+| Local-only | Session, AdHocRequest, ResponseView, `UserAccount.passwordHash` |
 | Secrets | Encrypt env values and auth fields at rest; TLS in transit for sync |
 | Conflicts | Last-write-wins per entity via `updatedAt` (single-user; no team edit) |
 | Deletes | Soft-delete via `deletedAt`, then purge after sync |

@@ -20,16 +20,16 @@ interface RequestBuilderPanelProps {
   draft: RequestDraft;
   onDraftChange: (draft: RequestDraft) => void;
   send: SendState;
-  definedKeys: ReadonlySet<string>;
+  envValues: ReadonlyMap<string, string>;
   onSend: () => void;
-  onFixVariable: () => void;
+  onFixVariable: (key: string) => void;
 }
 
 export function RequestBuilderPanel({
   draft,
   onDraftChange,
   send,
-  definedKeys,
+  envValues,
   onSend,
   onFixVariable,
 }: RequestBuilderPanelProps) {
@@ -93,7 +93,7 @@ export function RequestBuilderPanel({
           />
           <PlaceholderHints
             text={draft.url}
-            definedKeys={definedKeys}
+            envValues={envValues}
             onFixVariable={onFixVariable}
           />
           {urlError && <p className="mt-1 text-[0.75rem] text-error">{urlError}</p>}
@@ -133,7 +133,7 @@ export function RequestBuilderPanel({
             pairs={draft.queryParams}
             onChange={onParamsChange}
             addLabel="Add parameter"
-            definedKeys={definedKeys}
+            envValues={envValues}
             onFixVariable={onFixVariable}
           />
         )}
@@ -142,7 +142,7 @@ export function RequestBuilderPanel({
             pairs={draft.headers}
             onChange={(headers) => onDraftChange({ ...draft, headers })}
             addLabel="Add header"
-            definedKeys={definedKeys}
+            envValues={envValues}
             onFixVariable={onFixVariable}
           />
         )}
@@ -151,7 +151,7 @@ export function RequestBuilderPanel({
             draft={draft}
             disabled={draft.method === "GET"}
             onDraftChange={onDraftChange}
-            definedKeys={definedKeys}
+            envValues={envValues}
             onFixVariable={onFixVariable}
             bodyError={bodyError}
           />
@@ -160,7 +160,7 @@ export function RequestBuilderPanel({
           <AuthTab
             draft={draft}
             onDraftChange={onDraftChange}
-            definedKeys={definedKeys}
+            envValues={envValues}
             onFixVariable={onFixVariable}
           />
         )}

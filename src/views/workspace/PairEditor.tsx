@@ -14,15 +14,15 @@ interface PairEditorProps {
   pairs: KeyValuePair[];
   onChange: (pairs: KeyValuePair[]) => void;
   addLabel: string;
-  definedKeys: ReadonlySet<string>;
-  onFixVariable: () => void;
+  envValues: ReadonlyMap<string, string>;
+  onFixVariable: (key: string) => void;
 }
 
 export function PairEditor({
   pairs,
   onChange,
   addLabel,
-  definedKeys,
+  envValues,
   onFixVariable,
 }: PairEditorProps) {
   return (
@@ -41,7 +41,7 @@ export function PairEditor({
           <div className="px-1 pb-1">
             <PlaceholderHints
               text={pair.value}
-              definedKeys={definedKeys}
+              envValues={envValues}
               onFixVariable={onFixVariable}
             />
           </div>

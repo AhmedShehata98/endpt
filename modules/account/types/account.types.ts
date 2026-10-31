@@ -6,6 +6,8 @@ export interface UserAccount {
   id: string;
   email: string;
   displayName: string | null;
+  /** Argon2 PHC string. Local-only; never sync or expose to UI. */
+  passwordHash: string;
   cloudUserId: string | null;
   createdAt: string;
   updatedAt: string;

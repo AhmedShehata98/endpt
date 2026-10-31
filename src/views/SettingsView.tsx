@@ -6,16 +6,26 @@ import type { UserPreferences } from "@/hooks/useUserPreferences";
 
 interface SettingsViewProps {
   signedIn: boolean;
+  displayName?: string | null;
+  email?: string | null;
+  lastSyncedAt?: string | null;
   preferences: UserPreferences;
   onPreferencesChange: (patch: Partial<UserPreferences>) => void;
   onSignIn: () => void;
+  onSignUp: () => void;
+  onSignOut: () => void;
 }
 
 export function SettingsView({
   signedIn,
+  displayName,
+  email,
+  lastSyncedAt = null,
   preferences,
   onPreferencesChange,
   onSignIn,
+  onSignUp,
+  onSignOut,
 }: SettingsViewProps) {
   return (
     <div className="h-full overflow-auto bg-bg-app">
@@ -29,15 +39,32 @@ export function SettingsView({
 
         <Section title="Account">
           {signedIn ? (
-            <p className="text-[0.8125rem] text-text-secondary">Signed in locally.</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-1">
+                <p className="truncate text-[0.8125rem] font-medium text-text-primary">
+                  {displayName ?? "Account"}
+                </p>
+                {email ? (
+                  <p className="truncate text-[0.75rem] text-text-secondary">{email}</p>
+                ) : null}
+              </div>
+              <Button variant="secondary" size="sm" onClick={onSignOut}>
+                Sign out
+              </Button>
+            </div>
           ) : (
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-[0.8125rem] text-text-secondary">
                 Guests use defaults. Sign in to save preferences.
               </p>
-              <Button variant="secondary" size="sm" onClick={onSignIn}>
-                Sign in
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="secondary" size="sm" onClick={onSignIn}>
+                  Sign in
+                </Button>
+                <Button variant="primary" size="sm" onClick={onSignUp}>
+                  Sign up
+                </Button>
+              </div>
             </div>
           )}
         </Section>
@@ -109,8 +136,11 @@ export function SettingsView({
                   className="size-3.5 accent-accent"
                 />
               </label>
-              <div className="flex items-center justify-between">
-                <span className="text-[0.75rem] text-text-muted">Status: Local only</span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-[0.75rem] text-text-muted">
+                  <p>Status: Local only</p>
+                  <p>Last synced: {lastSyncedAt ? formatSyncedAt(lastSyncedAt) : "Never"}</p>
+                </div>
                 <Button variant="secondary" size="sm" disabled={!preferences.syncEnabled}>
                   Sync now
                 </Button>
@@ -134,4 +164,12 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
       {children}
     </section>
   );
+}
+
+function formatSyncedAt(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString();
+  } catch {
+    return iso;
+  }
 }

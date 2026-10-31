@@ -322,16 +322,16 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 
 **Tasks:**
 
-- [ ] Summary bar: status, status text, duration, size (derived), text label for success/client error/server error
-- [ ] Tabs: **Body**, **Headers**
-- [ ] CodeMirror 6 read-only view with JSON and HTML highlighting; prettify; raw fallback; lazy-load language packs
-- [ ] HTML shown as source only, never rendered or executed
-- [ ] **Copy** action that copies the full `ResponseView.body`
-- [ ] **Wrap lines** toggle (default from `UserSettings.wrapResponseLines`)
-- [ ] **Fullscreen** modal with the same view, Copy, and Wrap; focus returns to the trigger on close
-- [ ] Empty states: no request yet, empty body, non-JSON/HTML content
-- [ ] Network failure panel (distinct from HTTP errors)
-- [ ] Format detection and prettify run off the main render path for large bodies
+- [x] Summary bar: status, status text, duration, size (derived), text label for success/client error/server error
+- [x] Tabs: **Body**, **Headers**
+- [x] CodeMirror 6 read-only view with JSON and HTML highlighting; prettify; raw fallback; lazy-load language packs
+- [x] HTML shown as source only, never rendered or executed
+- [x] **Copy** action that copies the full `ResponseView.body`
+- [x] **Wrap lines** toggle (default from `UserSettings.wrapResponseLines`)
+- [x] **Fullscreen** modal with the same view, Copy, and Wrap; focus returns to the trigger on close
+- [x] Empty states: no request yet, empty body, non-JSON/HTML content
+- [x] Network failure panel (distinct from HTTP errors)
+- [x] Format detection and prettify run off the main render path for large bodies
 
 **Acceptance criteria:**
 
@@ -350,15 +350,15 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 
 **Tasks:**
 
-- [ ] **Environment** view: table of Role, Key, Value, row actions; **Add variable** starts with role selection and proposes the default key
-- [ ] Roles: `authToken`, `apiKey`, `username`, `password`, `baseUrl` (FR-11–14)
-- [ ] Mask secret roles with an explicit reveal and hide; `baseUrl` unmasked
-- [ ] Inline validation: duplicate keys rejected
-- [ ] Distinguish missing from defined-but-empty values
-- [ ] **Variables drawer** from the header and from **Fix variable**; reuses the same editor; prompt before closing with unsaved edits
-- [ ] Header count of unresolved placeholders
-- [ ] Storage-truth copy: encrypted on device; synced only when sync is enabled
-- [ ] Never show secrets in tooltips, toasts, or logs
+- [x] **Environment** view: table of Role, Key, Value, row actions; **Add variable** starts with role selection and proposes the default key
+- [x] Roles: `authToken`, `apiKey`, `username`, `password`, `baseUrl` (FR-11–14)
+- [x] Mask secret roles with an explicit reveal and hide; `baseUrl` unmasked
+- [x] Inline validation: duplicate keys rejected
+- [x] Distinguish missing from defined-but-empty values
+- [x] **Variables drawer** from the header and from **Fix variable**; reuses the same editor; prompt before closing with unsaved edits
+- [x] Header count of unresolved placeholders
+- [x] Storage-truth copy: encrypted on device; synced only when sync is enabled
+- [x] Never show secrets in tooltips, toasts, or logs
 
 **Acceptance criteria:**
 
@@ -377,13 +377,13 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 
 **Tasks:**
 
-- [ ] **Sign Up** and **Sign In** screens with **Continue without account**
-- [ ] Local-first auth: create and verify accounts offline (Argon2 hash); create a `Session`
-- [ ] Optional cloud link via `cloudUserId` (wired in Phase 8)
-- [ ] Account menu in the header: Sign in, or display name with Sign out
-- [ ] **Settings** view: Account, Appearance (theme), Request defaults (default method), Response (wrap lines), Sync (toggle, status, last synced, **Sync now**), About
-- [ ] Persist `UserSettings`; apply on next launch (immediate apply allowed)
-- [ ] Guests use defaults; Sync is disabled with "Sign in to enable cloud sync" (UI open decision #2)
+- [x] **Sign Up** and **Sign In** screens with **Continue without account**
+- [x] Local-first auth: create and verify accounts offline (Argon2 hash); create a `Session`
+- [x] Optional cloud link via `cloudUserId` (wired in Phase 8)
+- [x] Account menu in the header: Sign in, or display name with Sign out
+- [x] **Settings** view: Account, Appearance (theme), Request defaults (default method), Response (wrap lines), Sync (toggle, status, last synced, **Sync now**), About
+- [x] Persist `UserSettings`; apply on next launch (immediate apply allowed)
+- [x] Guests use defaults; Sync is disabled with "Sign in to enable cloud sync" (UI open decision #2)
 
 **Acceptance criteria:**
 
@@ -547,7 +547,7 @@ After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environm
 | 2 | Production HTTP adapter (Fetch vs Tauri HTTP plugin) | ~~Phase 2~~ | **Resolved:** Tauri HTTP plugin in production; Fetch for tests and non-desktop runs |
 | 3 | Local store (SQLite vs Tauri store) | ~~Phase 1~~ | **Resolved:** SQLite ([ADR-005](./adr/ADR-005-local-persistence.md)) |
 | 4 | Body editor allowed for DELETE? | Phase 2–3 | Yes; only GET is disabled |
-| 5 | Do guests persist preferences? | Phase 6 | No; defaults only |
+| 5 | Do guests persist preferences? | ~~Phase 6~~ | **Resolved:** No; in-session tweaks allowed, never persisted; relaunch uses defaults |
 | 6 | Saved requests: explicit save or autosave | Phase 7 | Explicit **Save Request** only |
 | 7 | Custom variable keys beyond the five roles | Phase 5 | Not allowed |
 
@@ -602,9 +602,9 @@ A task is done when:
 | 1 Persistence and secrets | Completed | 9/9 | SQLite + keychain encryption; guest draft/env persist |
 | 2 Request engine and resolver | Completed | 13/13 | Tauri HTTP plugin in production; Fetch for tests and non-desktop runs |
 | 3 Workspace and builder UI | Completed | 12/12 | Wired to RequestService; SendState + URL↔params + placeholders |
-| 4 Response viewer | Not Started | 0/10 | |
-| 5 Environment variables | Not Started | 0/9 | |
-| 6 Accounts and settings | Not Started | 0/7 | |
+| 4 Response viewer | Completed | 10/10 | CodeMirror 6 + prettify; copy uses raw body; fullscreen focus restore |
+| 5 Environment variables | Completed | 9/9 | Shared editor + Variables drawer draft/Apply; Fix variable Flow B |
+| 6 Accounts and settings | Completed | 7/7 | Argon2 local auth + Session restore; UserSettings persist when signed in; guests defaults-only |
 | 7 Projects and collections | Not Started | 0/9 | |
 | 8 Cloud sync | Not Started | 0/9 | Blocked on sync backend decision |
 | 9 Integration and release | Not Started | 0/10 | |

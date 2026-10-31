@@ -3,12 +3,20 @@ import { Button, Input, SecretInput } from "@/components";
 import { AuthScreenLayout } from "@/views/auth/AuthScreenLayout";
 
 interface SignInViewProps {
-  onSignIn: (email: string) => void;
+  onSignIn: (input: { email: string; password: string }) => Promise<boolean>;
   onGoSignUp: () => void;
   onContinueWithoutAccount: () => void;
+  busy?: boolean;
+  error?: string | null;
 }
 
-export function SignInView({ onSignIn, onGoSignUp, onContinueWithoutAccount }: SignInViewProps) {
+export function SignInView({
+  onSignIn,
+  onGoSignUp,
+  onContinueWithoutAccount,
+  busy = false,
+  error = null,
+}: SignInViewProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -57,7 +65,7 @@ export function SignInView({ onSignIn, onGoSignUp, onContinueWithoutAccount }: S
         className="mt-6 space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
-          onSignIn(email || "developer@example.com");
+          void onSignIn({ email, password });
         }}
       >
         <div>
@@ -70,8 +78,9 @@ export function SignInView({ onSignIn, onGoSignUp, onContinueWithoutAccount }: S
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="developer@example.com"
+            placeholder="you@example.com"
             autoComplete="email"
+            disabled={busy}
           />
         </div>
         <div>
@@ -84,10 +93,16 @@ export function SignInView({ onSignIn, onGoSignUp, onContinueWithoutAccount }: S
             onChange={setPassword}
             placeholder="••••••••••••"
             aria-label="Password"
+            disabled={busy}
           />
         </div>
-        <Button type="submit" variant="primary" className="h-9 w-full">
-          Sign in
+        {error ? (
+          <p className="text-[0.8125rem] text-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+        <Button type="submit" variant="primary" className="h-9 w-full" disabled={busy}>
+          {busy ? "Signing in…" : "Sign in"}
         </Button>
       </form>
     </AuthScreenLayout>

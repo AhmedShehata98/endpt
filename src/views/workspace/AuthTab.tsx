@@ -5,14 +5,14 @@ import { PlaceholderHints } from "./PlaceholderHints";
 interface AuthTabProps {
   draft: RequestDraft;
   onDraftChange: (draft: RequestDraft) => void;
-  definedKeys: ReadonlySet<string>;
-  onFixVariable: () => void;
+  envValues: ReadonlyMap<string, string>;
+  onFixVariable: (key: string) => void;
 }
 
 export function AuthTab({
   draft,
   onDraftChange,
-  definedKeys,
+  envValues,
   onFixVariable,
 }: AuthTabProps) {
   return (
@@ -59,7 +59,7 @@ export function AuthTab({
               />
               <PlaceholderHints
                 text={draft.auth.token ?? ""}
-                definedKeys={definedKeys}
+                envValues={envValues}
                 onFixVariable={onFixVariable}
               />
             </div>
@@ -88,7 +88,7 @@ export function AuthTab({
                 />
                 <PlaceholderHints
                   text={draft.auth.apiKey ?? ""}
-                  definedKeys={definedKeys}
+                  envValues={envValues}
                   onFixVariable={onFixVariable}
                 />
               </div>
@@ -110,7 +110,7 @@ export function AuthTab({
                 />
                 <PlaceholderHints
                   text={draft.auth.username ?? ""}
-                  definedKeys={definedKeys}
+                  envValues={envValues}
                   onFixVariable={onFixVariable}
                 />
               </div>
@@ -125,7 +125,7 @@ export function AuthTab({
                 />
                 <PlaceholderHints
                   text={draft.auth.password ?? ""}
-                  definedKeys={definedKeys}
+                  envValues={envValues}
                   onFixVariable={onFixVariable}
                 />
               </div>

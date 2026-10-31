@@ -25,10 +25,13 @@ export function useWorkspaceSend({ variables }: UseWorkspaceSendOptions) {
 
   const bindings = useMemo(() => toEnvBindings(variables), [variables]);
 
-  const definedKeys = useMemo(
-    () => new Set(bindings.map((binding) => binding.key)),
-    [bindings],
-  );
+  const envValues = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const binding of bindings) {
+      map.set(binding.key, binding.value);
+    }
+    return map;
+  }, [bindings]);
 
   const unresolvedForDraft = useCallback(
     (draft: RequestDraft): string[] => resolveDraft(draft, bindings).unresolved,
@@ -80,7 +83,7 @@ export function useWorkspaceSend({ variables }: UseWorkspaceSendOptions) {
     sendDraft,
     responseForView,
     showPreviousResponse,
-    definedKeys,
+    envValues,
     unresolvedForDraft,
   };
 }

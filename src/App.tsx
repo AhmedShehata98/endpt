@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { AccountService } from "@modules/account";
 import type { AppRepositories } from "@modules/persistence";
 import type { SyncStatus } from "@modules/sync";
-import { getAppRepositories } from "@/app/composition";
+import { createAccountService, getAppRepositories } from "@/app/composition";
 import { isAuthView, type AppView } from "@/app/navigation";
 import { Toast } from "@/components/Toast";
 import { useCollapsedSidebar } from "@/hooks/useCollapsedSidebar";
@@ -25,19 +26,29 @@ const PHASE0_SYNC_STATUS: SyncStatus = "local-only";
 
 export default function App() {
   const [repos, setRepos] = useState<AppRepositories | null>(null);
+  const [accountService, setAccountService] = useState<AccountService | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [persistError, setPersistError] = useState<string | null>(null);
+  const [copyToast, setCopyToast] = useState<string | null>(null);
   const [view, setView] = useState<AppView>("workspace");
   const [variablesOpen, setVariablesOpen] = useState(false);
+  const [variablesFocusKey, setVariablesFocusKey] = useState<string | null>(null);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
+  const fullscreenTriggerRef = useRef<HTMLButtonElement>(null);
 
   const onPersistError = useCallback((message: string) => {
     setPersistError(message);
   }, []);
 
   const collapsed = useCollapsedSidebar();
-  const session = useSession();
-  const { preferences, updatePreferences, setSyncEnabled } = useUserPreferences();
+  const session = useSession({ service: accountService });
+  const { preferences, updatePreferences } = useUserPreferences({
+    signedIn: session.signedIn,
+    userId: session.account?.id ?? null,
+    initialSettings: session.settings,
+    repository: repos?.userSettings ?? null,
+    onPersistError,
+  });
   const {
     draft,
     setDraft,
@@ -59,7 +70,7 @@ export default function App() {
     sendDraft,
     responseForView,
     showPreviousResponse,
-    definedKeys,
+    envValues,
     unresolvedForDraft,
   } = useWorkspaceSend({ variables });
 
@@ -73,7 +84,9 @@ export default function App() {
     let cancelled = false;
     void getAppRepositories()
       .then((created) => {
-        if (!cancelled) setRepos(created);
+        if (cancelled) return;
+        setRepos(created);
+        setAccountService(createAccountService(created));
       })
       .catch((error: unknown) => {
         if (cancelled) return;
@@ -92,8 +105,30 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [persistError]);
 
+  useEffect(() => {
+    if (!copyToast) return;
+    const timer = window.setTimeout(() => setCopyToast(null), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copyToast]);
+
   const goWorkspace = useCallback(() => {
     setView("workspace");
+  }, []);
+
+  const setWrapLines = useCallback(
+    (wrapResponseLines: boolean) => {
+      updatePreferences({ wrapResponseLines });
+    },
+    [updatePreferences],
+  );
+
+  const handleCopyResult = useCallback((ok: boolean) => {
+    setCopyToast(ok ? "Copied" : "Copy failed");
+  }, []);
+
+  const closeFullscreen = useCallback(() => {
+    setFullscreenOpen(false);
+    queueMicrotask(() => fullscreenTriggerRef.current?.focus());
   }, []);
 
   const createNewRequest = useCallback(() => {
@@ -107,9 +142,43 @@ export default function App() {
     void sendDraft(draft);
   }, [draft, send.status, sendDraft, storageReady]);
 
-  const openVariables = useCallback(() => {
+  const openVariables = useCallback((focusKey?: string) => {
+    setVariablesFocusKey(focusKey ?? null);
     setVariablesOpen(true);
   }, []);
+
+  const closeVariables = useCallback(() => {
+    setVariablesOpen(false);
+    setVariablesFocusKey(null);
+  }, []);
+
+  const handleSignIn = useCallback(
+    async (input: { email: string; password: string }) => {
+      const result = await session.signIn(input);
+      if (result.status === "ok") {
+        goWorkspace();
+        return true;
+      }
+      return false;
+    },
+    [goWorkspace, session],
+  );
+
+  const handleSignUp = useCallback(
+    async (input: { email: string; password: string; displayName: string }) => {
+      const result = await session.signUp(input);
+      if (result.status === "ok") {
+        goWorkspace();
+        return true;
+      }
+      return false;
+    },
+    [goWorkspace, session],
+  );
+
+  const handleSignOut = useCallback(() => {
+    void session.signOut();
+  }, [session]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -139,24 +208,30 @@ export default function App() {
   if (isAuthView(view)) {
     return view === "sign-in" ? (
       <SignInView
-        onSignIn={(email) => {
-          session.signIn(email);
-          goWorkspace();
+        onSignIn={handleSignIn}
+        onGoSignUp={() => {
+          session.setError(null);
+          setView("sign-up");
         }}
-        onGoSignUp={() => setView("sign-up")}
         onContinueWithoutAccount={goWorkspace}
+        busy={session.busy}
+        error={session.error}
       />
     ) : (
       <SignUpView
-        onSignUp={(email, name) => {
-          session.signUp(email, name);
-          goWorkspace();
+        onSignUp={handleSignUp}
+        onGoSignIn={() => {
+          session.setError(null);
+          setView("sign-in");
         }}
-        onGoSignIn={() => setView("sign-in")}
         onContinueWithoutAccount={goWorkspace}
+        busy={session.busy}
+        error={session.error}
       />
     );
   }
+
+  const headerSignedIn = session.ready ? session.signedIn : false;
 
   return (
     <div className="flex h-full min-h-0 bg-bg-app text-text-primary">
@@ -174,14 +249,14 @@ export default function App() {
           saveState={saveState}
           unresolvedCount={unresolvedCount}
           syncStatus={PHASE0_SYNC_STATUS}
-          signedIn={session.signedIn}
+          signedIn={headerSignedIn}
           displayName={session.displayName}
           onOpenVariables={openVariables}
-          onSignIn={() => setView("sign-in")}
-          onSignOut={() => {
-            session.signOut();
-            setSyncEnabled(false);
+          onSignIn={() => {
+            session.setError(null);
+            setView("sign-in");
           }}
+          onSignOut={handleSignOut}
         />
 
         <main className="min-h-0 flex-1 overflow-hidden">
@@ -198,20 +273,26 @@ export default function App() {
                   send={send}
                   response={responseForView}
                   showPreviousResponse={showPreviousResponse}
-                  definedKeys={definedKeys}
+                  envValues={envValues}
                   wrapLines={preferences.wrapResponseLines}
+                  onWrapLinesChange={setWrapLines}
                   onSend={sendCurrentDraft}
-                  onFixVariable={openVariables}
+                  onFixVariable={(key) => openVariables(key)}
                   onOpenFullscreen={() => {
                     if (responseForView) setFullscreenOpen(true);
                   }}
                   onTryAgain={sendCurrentDraft}
+                  onCopyResult={handleCopyResult}
+                  fullscreenTriggerRef={fullscreenTriggerRef}
                 />
               )}
               {view === "collections" && (
                 <CollectionsView
                   signedIn={session.signedIn}
-                  onSignIn={() => setView("sign-in")}
+                  onSignIn={() => {
+                    session.setError(null);
+                    setView("sign-in");
+                  }}
                   onOpenRequest={(name, method) => {
                     openSavedRequest(name, method);
                     goWorkspace();
@@ -224,9 +305,20 @@ export default function App() {
               {view === "settings" && (
                 <SettingsView
                   signedIn={session.signedIn}
+                  displayName={session.displayName}
+                  email={session.account?.email ?? null}
+                  lastSyncedAt={session.account?.lastSyncedAt ?? null}
                   preferences={preferences}
                   onPreferencesChange={updatePreferences}
-                  onSignIn={() => setView("sign-in")}
+                  onSignIn={() => {
+                    session.setError(null);
+                    setView("sign-in");
+                  }}
+                  onSignUp={() => {
+                    session.setError(null);
+                    setView("sign-up");
+                  }}
+                  onSignOut={handleSignOut}
                 />
               )}
             </>
@@ -237,7 +329,9 @@ export default function App() {
       <VariablesDrawer
         open={variablesOpen && storageReady}
         variables={variables}
-        onClose={() => setVariablesOpen(false)}
+        focusKey={variablesFocusKey}
+        onApply={setVariables}
+        onClose={closeVariables}
       />
 
       {responseForView && (
@@ -245,14 +339,21 @@ export default function App() {
           open={fullscreenOpen}
           response={responseForView}
           wrapLines={preferences.wrapResponseLines}
-          onWrapLinesChange={(wrapResponseLines) => updatePreferences({ wrapResponseLines })}
-          onClose={() => setFullscreenOpen(false)}
+          onWrapLinesChange={setWrapLines}
+          onCopyResult={handleCopyResult}
+          onClose={closeFullscreen}
         />
       )}
 
-      {persistError ? (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-50">
-          <Toast message={persistError} tone="error" />
+      {persistError || copyToast ? (
+        <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2">
+          {persistError ? <Toast message={persistError} tone="error" /> : null}
+          {copyToast ? (
+            <Toast
+              message={copyToast}
+              tone={copyToast === "Copied" ? "success" : "error"}
+            />
+          ) : null}
         </div>
       ) : null}
     </div>

@@ -1,6 +1,11 @@
 import { useEffect, useRef } from "react";
 import { Button, StatusPill } from "@/components";
-import type { ResponseView } from "@modules/response";
+import {
+  formatResponseBytes,
+  responseSizeBytes,
+  type ResponseView,
+} from "@modules/response";
+import { useFormattedBody } from "@/hooks/useFormattedBody";
 import { ResponseBodyView } from "@/views/response/ResponseBodyView";
 
 interface ResponseFullscreenProps {
@@ -8,6 +13,7 @@ interface ResponseFullscreenProps {
   response: ResponseView;
   wrapLines: boolean;
   onWrapLinesChange: (wrap: boolean) => void;
+  onCopyResult: (ok: boolean) => void;
   onClose: () => void;
 }
 
@@ -16,9 +22,15 @@ export function ResponseFullscreen({
   response,
   wrapLines,
   onWrapLinesChange,
+  onCopyResult,
   onClose,
 }: ResponseFullscreenProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const formatted = useFormattedBody(
+    open ? response.body : "",
+    open ? response.bodyFormat : "raw",
+  );
+  const sizeLabel = formatResponseBytes(responseSizeBytes(response));
 
   useEffect(() => {
     if (!open) return;
@@ -31,6 +43,15 @@ export function ResponseFullscreen({
   }, [open, onClose]);
 
   if (!open) return null;
+
+  const copyBody = async () => {
+    try {
+      await navigator.clipboard.writeText(response.body);
+      onCopyResult(true);
+    } catch {
+      onCopyResult(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-bg-surface" role="dialog" aria-modal="true">
@@ -45,6 +66,9 @@ export function ResponseFullscreen({
               {response.durationMs} ms
             </span>
           )}
+          <span className="font-mono text-[0.75rem] text-text-muted tabular-nums">
+            {sizeLabel}
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <label className="flex items-center gap-1.5 text-[0.75rem] text-text-secondary">
@@ -56,11 +80,7 @@ export function ResponseFullscreen({
             />
             Wrap lines
           </label>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => void navigator.clipboard?.writeText(response.body)}
-          >
+          <Button variant="secondary" size="sm" onClick={() => void copyBody()}>
             Copy
           </Button>
           <Button
@@ -74,7 +94,13 @@ export function ResponseFullscreen({
           </Button>
         </div>
       </div>
-      <ResponseBodyView body={response.body} wrapLines={wrapLines} className="p-4" />
+      <ResponseBodyView
+        body={formatted.text}
+        bodyFormat={formatted.format}
+        wrapLines={wrapLines}
+        rendering={formatted.rendering}
+        className="p-4"
+      />
     </div>
   );
 }

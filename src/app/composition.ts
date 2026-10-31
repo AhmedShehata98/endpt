@@ -1,8 +1,10 @@
 import { isTauri } from "@tauri-apps/api/core";
+import { AccountService } from "@modules/account";
 import { FetchHttpClient, RequestService, TauriHttpClient } from "@modules/request";
 import {
   createAppRepositories,
   createMemoryRepositories,
+  createPasswordHasher,
   type AppRepositories,
 } from "@modules/persistence";
 
@@ -23,4 +25,13 @@ export function resetAppRepositoriesForTests(repos?: AppRepositories): void {
 export function createRequestService(): RequestService {
   const http = isTauri() ? new TauriHttpClient() : new FetchHttpClient();
   return new RequestService(http);
+}
+
+export function createAccountService(repos: AppRepositories): AccountService {
+  return new AccountService(
+    repos.userAccounts,
+    repos.sessions,
+    repos.userSettings,
+    createPasswordHasher(),
+  );
 }

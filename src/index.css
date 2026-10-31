@@ -142,3 +142,12 @@
     outline-offset: 1px;
   }
 }
+
+.response-body-editor,
+.response-body-editor .cm-editor {
+  height: 100%;
+}
+
+.response-body-editor .cm-editor.cm-focused {
+  outline: none;
+}

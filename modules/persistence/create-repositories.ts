@@ -14,7 +14,10 @@ import { MemorySavedRequestRepository } from "./infrastructure/memory/memory-sav
 import { MemorySessionRepository } from "./infrastructure/memory/memory-session.repository";
 import { MemoryUserAccountRepository } from "./infrastructure/memory/memory-user-account.repository";
 import { MemoryUserSettingsRepository } from "./infrastructure/memory/memory-user-settings.repository";
+import type { PasswordHasher } from "@modules/account/ports/password-hasher.interface";
+import { MemoryPasswordHasher } from "./infrastructure/secrets/memory-password-hasher";
 import { MemorySecretCipher } from "./infrastructure/secrets/memory-secret-cipher";
+import { TauriPasswordHasher } from "./infrastructure/secrets/tauri-password-hasher";
 import { TauriSecretCipher } from "./infrastructure/secrets/tauri-secret-cipher";
 import { isTauriRuntime, loadEndptDatabase } from "./infrastructure/sqlite/database";
 import { SqliteAdHocRequestRepository } from "./infrastructure/sqlite/sqlite-ad-hoc-request.repository";
@@ -80,4 +83,8 @@ export async function createAppRepositories(): Promise<AppRepositories> {
     sessions: new SqliteSessionRepository(db, cipher),
     userSettings: new SqliteUserSettingsRepository(db),
   };
+}
+
+export function createPasswordHasher(): PasswordHasher {
+  return isTauriRuntime() ? new TauriPasswordHasher() : new MemoryPasswordHasher();
 }

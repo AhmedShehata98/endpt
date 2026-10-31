@@ -8,6 +8,7 @@ interface SecretInputProps {
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
   "aria-label"?: string;
 }
 
@@ -17,6 +18,7 @@ export function SecretInput({
   onChange,
   placeholder,
   className,
+  disabled = false,
   "aria-label": ariaLabel,
 }: SecretInputProps) {
   const [revealed, setRevealed] = useState(false);
@@ -33,12 +35,14 @@ export function SecretInput({
         aria-label={ariaLabel}
         className="pr-9"
         autoComplete="off"
+        disabled={disabled}
       />
       <button
         type="button"
-        className="absolute inset-y-0 right-0 flex w-8 items-center justify-center text-text-muted hover:text-text-primary"
+        className="absolute inset-y-0 right-0 flex w-8 items-center justify-center text-text-muted hover:text-text-primary disabled:opacity-50"
         onClick={() => setRevealed((v) => !v)}
         aria-label={revealed ? "Hide value" : "Reveal value"}
+        disabled={disabled}
       >
         <span className="text-xs">{revealed ? "Hide" : "Show"}</span>
       </button>
