@@ -155,7 +155,7 @@ function RouteComponent() {
 
         <Section title="About">
           <p className="text-[0.8125rem] text-text-secondary">
-            Endpt v1.0.0 — lightweight desktop API client for testing and integrating with
+            Endpt v1.1.0 — lightweight desktop API client for testing and integrating with
             HTTP endpoints
           </p>
         </Section>
