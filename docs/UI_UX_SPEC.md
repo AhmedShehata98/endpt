@@ -440,20 +440,67 @@ Calm, neutral, precise. A focused engineering tool, not a SaaS dashboard. Avoid 
 
 ### 11.2 Color tokens
 
-| Token | Value | Usage |
-|---|---|---|
-| `color.bg.app` | `#F6F7FB` | App background |
-| `color.bg.surface` | `#FFFFFF` | Panels, inputs, dialogs |
-| `color.text.primary` | `#101828` | Main text |
-| `color.text.secondary` | `#667085` | Supporting text |
-| `color.border.default` | `#E4E7EC` | Borders and dividers |
-| `color.accent.primary` | `#4F46E5` | Primary actions, focus |
-| `color.accent.subtle` | `#EEF2FF` | Selected backgrounds |
-| `color.status.success` | `#12B76A` | Success |
-| `color.status.error` | `#D92D20` | Error |
-| `color.status.warning` | `#DC6803` | Warning |
+Implemented in `src/index.css` as CSS custom properties. Palette direction: **neutral Zinc** surfaces with a **teal** accent (not indigo). Subtle status tints pair with each status color. Verify contrast (WCAG 2.2 AA) for actual pairs. Never communicate state through color alone.
 
-Dark theme tokens must be defined for `theme = dark`. Verify contrast (WCAG 2.2 AA) for actual pairs before finalizing. Never communicate state through color alone.
+#### Light (`:root`)
+
+| Token | CSS var | Value | Usage |
+|---|---|---|---|
+| `color.bg.app` | `--bg-app` | `#fafafa` | App background |
+| `color.bg.surface` | `--bg-surface` | `#ffffff` | Panels, inputs, dialogs |
+| `color.bg.subtle` | `--bg-subtle` | `#f4f4f5` | Secondary surfaces, hover wash |
+| `color.bg.active` | `--bg-active` | `#e4e4e7` | Pressed / selected chrome |
+| `color.bg.tint` | `--bg-tint` | `#f0fdf4` | Soft success-adjacent tint |
+| `color.text.primary` | `--text-primary` | `#09090b` | Main text |
+| `color.text.secondary` | `--text-secondary` | `#52525b` | Supporting text |
+| `color.text.muted` | `--text-muted` | `#71717a` | Labels, meta |
+| `color.text.subtle` | `--text-subtle` | `#a1a1aa` | Placeholder / low emphasis |
+| `color.border.default` | `--border-default` | `#e4e4e7` | Borders and dividers |
+| `color.border.subtle` | `--border-subtle` | `#f4f4f5` | Hairline / quiet edges |
+| `color.border.strong` | `--border-strong` | `#d4d4d8` | Emphasized borders |
+| `color.accent` | `--accent` | `#0d9488` | Primary actions, focus |
+| `color.accent.hover` | `--accent-hover` | `#0f766e` | Primary hover |
+| `color.accent.subtle` | `--accent-subtle` | `#ccfbf1` | Selected / accent wash |
+| `color.accent.on` | `--accent-on` | `#ffffff` | Text/icon on accent |
+| `color.status.success` | `--success` | `#10b981` | Success |
+| `color.status.success.subtle` | `--success-subtle` | `#ecfdf5` | Success background |
+| `color.status.error` | `--error` | `#ef4444` | Error |
+| `color.status.error.subtle` | `--error-subtle` | `#fef2f2` | Error background |
+| `color.status.warning` | `--warning` | `#f59e0b` | Warning |
+| `color.status.warning.subtle` | `--warning-subtle` | `#fffbeb` | Warning background |
+| `color.status.info` | `--info` | `#0ea5e9` | Info / numeric highlights |
+| `color.status.info.subtle` | `--info-subtle` | `#f0f9ff` | Info background |
+
+#### Dark (`.dark`)
+
+| Token | CSS var | Value | Usage |
+|---|---|---|---|
+| `color.bg.app` | `--bg-app` | `#09090b` | App background |
+| `color.bg.surface` | `--bg-surface` | `#121214` | Panels, inputs, dialogs |
+| `color.bg.subtle` | `--bg-subtle` | `#18181b` | Secondary surfaces |
+| `color.bg.active` | `--bg-active` | `#27272a` | Pressed / selected chrome |
+| `color.bg.tint` | `--bg-tint` | `#042f2e` | Soft teal-adjacent tint |
+| `color.text.primary` | `--text-primary` | `#f4f4f5` | Main text |
+| `color.text.secondary` | `--text-secondary` | `#a1a1aa` | Supporting text |
+| `color.text.muted` | `--text-muted` | `#71717a` | Labels, meta |
+| `color.text.subtle` | `--text-subtle` | `#52525b` | Placeholder / low emphasis |
+| `color.border.default` | `--border-default` | `#27272a` | Borders and dividers |
+| `color.border.subtle` | `--border-subtle` | `#18181b` | Quiet edges |
+| `color.border.strong` | `--border-strong` | `#3f3f46` | Emphasized borders |
+| `color.accent` | `--accent` | `#2dd4bf` | Primary actions, focus |
+| `color.accent.hover` | `--accent-hover` | `#5eead4` | Primary hover |
+| `color.accent.subtle` | `--accent-subtle` | `#134e4a` | Selected / accent wash |
+| `color.accent.on` | `--accent-on` | `#042f2e` | Text/icon on accent |
+| `color.status.success` | `--success` | `#34d399` | Success |
+| `color.status.success.subtle` | `--success-subtle` | `#064e3b` | Success background |
+| `color.status.error` | `--error` | `#f87171` | Error |
+| `color.status.error.subtle` | `--error-subtle` | `#7f1d1d` | Error background |
+| `color.status.warning` | `--warning` | `#fbbf24` | Warning |
+| `color.status.warning.subtle` | `--warning-subtle` | `#78350f` | Warning background |
+| `color.status.info` | `--info` | `#38bdf8` | Info |
+| `color.status.info.subtle` | `--info-subtle` | `#0369a1` | Info background |
+
+Tailwind maps these via `@theme` aliases such as `--color-bg-app`, `--color-accent`, `--color-success`, etc.
 
 ### 11.3 Typography
 
@@ -463,7 +510,16 @@ Dark theme tokens must be defined for `theme = dark`. Verify contrast (WCAG 2.2 
 
 ### 11.4 Spacing and geometry
 
-8 px base grid (4 px for fine alignment). Controls 32–36 px tall. 1 px borders. 6–8 px radius. Prefer separators and spacing over extra cards or shadows.
+8 px base grid (4 px for fine alignment). Controls 32–36 px tall. 1 px borders. Prefer separators and spacing over extra cards or shadows.
+
+**Radius** is intentionally sharp (near-square chrome). Tokens in `@theme`:
+
+| Token | CSS var | Value | Typical use |
+|---|---|---|---|
+| `radius.sm` | `--radius-sm` | `0` | Flush / square |
+| `radius.md` | `--radius-md` | `1px` | Compact controls |
+| `radius.lg` | `--radius-lg` | `2px` | Inputs, buttons, panels |
+| `radius.xl` | `--radius-xl` | `3px` | Larger containers / dialogs |
 
 ### 11.5 Components to standardize
 

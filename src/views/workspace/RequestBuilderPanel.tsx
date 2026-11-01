@@ -13,6 +13,7 @@ import { AuthTab } from "./AuthTab";
 import { BodyTab } from "./BodyTab";
 import { PairEditor } from "./PairEditor";
 import { PlaceholderHints } from "./PlaceholderHints";
+import { CgSpinnerTwo } from "react-icons/cg";
 
 type BuilderTab = "params" | "headers" | "body" | "auth";
 
@@ -65,7 +66,7 @@ export function RequestBuilderPanel({
 
   return (
     <div className="flex h-full flex-col bg-bg-surface">
-      <div className="flex items-center gap-2 border-b border-border-default p-3">
+      <div className="flex items-start gap-2 border-b border-border-default p-3">
         <Select
           aria-label="HTTP method"
           value={draft.method}
@@ -106,7 +107,14 @@ export function RequestBuilderPanel({
           disabled={sending}
           onClick={onSend}
         >
-          {sending ? "Sending…" : "Send"}
+          {
+            sending 
+              ? <>
+              <p>Sending…</p>
+              <CgSpinnerTwo className="animate-spin" />
+              </> 
+              : <p>Send</p>
+          }
         </Button>
       </div>
 

@@ -178,6 +178,7 @@ Persistence and storage are outside this HTTP path. When a storage adapter is ne
 |---|---|---|
 | Desktop shell | Tauri | Desktop-first, lightweight native window |
 | UI | React + TypeScript | Component UI; typed Presentation Layer |
+| Routing / navigation | TanStack Router (file-based routes) | URL-backed views; replaces in-memory `useState` view switching |
 | Build | Vite | Fast local tooling |
 | HTTP (adapter) | `FetchHttpClient` (Fetch API) behind `HttpClient` port | Injectable, testable; swappable for native HTTP later |
 | Local persistence | Platform-appropriate store (see implementation plan) | Offline-first; separate from HTTP |
@@ -261,11 +262,22 @@ See [`DATA_MODEL.md`](./DATA_MODEL.md).
 
 ### State Categories
 - **Local State:** Component-owned UI state (editors, tabs, loading flags).
-- **Shared State:** Active request draft, last response, selected project/collection when used.
+- **Shared State:** Active request draft, last response, session, sync status, preferences — provided by the application layout to child routes via React context (`src/state-management/application-context.tsx`).
+- **Navigation State:** Current screen is owned by **TanStack Router** (URL / route tree), not by a React `useState` view enum.
 - **Persistent State:** Saved entities that survive restarts (ad-hoc draft, projects, collections, env vars, settings).
 
 ### State Management Strategy
 Presentation owns ephemeral UI state. Application coordinates send and validation. Persistence adapters read/write durable entities. HTTP send does not write through the network client into storage; save/load is a separate path.
+
+### Navigation (TanStack Router)
+- Entry: `src/main.tsx` mounts `RouterProvider` with the generated route tree (`src/routeTree.gen.ts`).
+- File routes under `src/routes/`:
+  - `/application` — shell layout (sidebar, header, overlays); shared hooks and `ApplicationProvider`
+  - `/application/workspace`, `/collections`, `/environment`, `/settings` — main views
+  - `/sign-in`, `/sign-up` — auth screens (full-page; no application shell)
+- Path helpers live in `src/app/navigation.ts` (`VIEW_TO`, `MAIN_NAV`).
+- Sidebar and auth flows use `Link` / `navigate({ to })` instead of `setView(...)`.
+- Legacy monolith `src/App.tsx` and extracted `*View.tsx` page components are marked **TODO DELETED** after this migration.
 
 ---
 
@@ -332,7 +344,22 @@ modules/
 ├── account/
 ├── sync/
 └── persistence/               # SQLite adapters, secret cipher (ports stay in owning modules)
-src/                           # app shell / composition root
+src/
+├── app/                       # composition root, navigation path helpers
+├── routes/                    # TanStack Router file routes
+│   ├── __root.tsx
+│   ├── index.tsx
+│   ├── sign-in.tsx
+│   ├── sign-up.tsx
+│   └── application/
+│       ├── route.tsx          # shell + ApplicationProvider
+│       ├── workspace.tsx
+│       ├── collections.tsx
+│       ├── environment.tsx
+│       └── settings.tsx
+├── state-management/          # application React context for child routes
+├── shell/                     # Sidebar, AppHeader, etc.
+└── views/                     # shared panels/dialogs (page *View.tsx marked TODO DELETED)
 ```
 
 Other modules follow the same idea when they need Application logic, ports, or Infrastructure adapters. Align module ownership with [`DATA_MODEL.md`](./DATA_MODEL.md) §8 and the implementation plan.
@@ -344,7 +371,7 @@ Other modules follow the same idea when they need Application logic, ports, or I
 - **environment:** Variables and `{{key}}` resolution used before send.
 - **account / sync:** Optional identity and cloud sync. Sync uses a `SyncRemote` port; production adapter is Firebase Auth + Firestore ([ADR-006](./adr/ADR-006-firebase-sync.md)); SQLite stays the offline source of truth.
 - **persistence:** Local SQLite adapters and encryption helpers; repository ports live in owning modules.
-- **src:** Tauri/React shell wiring (composition root injects Infrastructure into Application).
+- **src:** Tauri/React shell, TanStack Router routes, composition root (injects Infrastructure into Application), and shared application context.
 
 ---
 
@@ -406,6 +433,14 @@ Local development vs production builds via standard Vite/Tauri env configuration
 - **Decision:** Omit a Domain Layer until real domain rules justify it.
 - **Alternatives:** Introduce entities/use-case domain packages now.
 - **Consequences:** Simpler tree; Application + ports cover current needs.
+
+### ADR-008: TanStack Router instead of in-memory view state
+
+- **Status:** Accepted
+- **Context:** MVP navigation used a React `useState<AppView>` switch inside a monolith (`App.tsx`) to show Workspace, Collections, Environment, Settings, and auth screens. That blocked deep links, browser history, and clear route ownership.
+- **Decision:** Use TanStack Router with file-based routes under `src/routes/`. The application layout route owns shared hooks/overlays and provides `ApplicationProvider` context; each former page view is a child route (or a top-level auth route). Navigate with `navigate` / `Link` and `VIEW_TO` paths.
+- **Alternatives:** Keep `setView` enum switching; React Router; custom history wrapper.
+- **Consequences:** URL-backed navigation; page UI lives in route files; legacy `App.tsx` and page-level `*View.tsx` files are marked TODO DELETED; shared panels/dialogs remain under `src/views/`.
 
 See also [ADR-005](./adr/ADR-005-local-persistence.md) (SQLite) and [ADR-006](./adr/ADR-006-firebase-sync.md) (Firebase sync).
 

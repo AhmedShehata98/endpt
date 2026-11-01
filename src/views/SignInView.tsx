@@ -1,6 +1,15 @@
+/**
+ * TODO DELETED — extracted to `src/routes/sign-in.tsx`. Remove this file when safe.
+ */
+export function SignInView() {
+  return null;
+}
+
+/*
 import { useState } from "react";
 import { Button, Input, SecretInput } from "@/components";
 import { AuthScreenLayout } from "@/views/auth/AuthScreenLayout";
+import { CgSpinnerTwo } from "react-icons/cg";
 
 interface SignInViewProps {
   onSignIn: (input: { email: string; password: string }) => Promise<boolean>;
@@ -102,9 +111,16 @@ export function SignInView({
           </p>
         ) : null}
         <Button type="submit" variant="primary" className="h-9 w-full" disabled={busy}>
-          {busy ? "Signing in…" : "Sign in"}
+          {busy 
+          ? <>
+            <p>Signing in…</p>
+            <CgSpinnerTwo className="animate-spin" />
+          </> 
+          : <p>Sign in</p>
+          }
         </Button>
       </form>
     </AuthScreenLayout>
   );
 }
+*/

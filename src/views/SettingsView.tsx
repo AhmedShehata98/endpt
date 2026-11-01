@@ -1,3 +1,11 @@
+/**
+ * TODO DELETED — extracted to `src/routes/application/settings.tsx`. Remove this file when safe.
+ */
+export function SettingsView() {
+  return null;
+}
+
+/*
 import type { ReactNode } from "react";
 import { Button, Select } from "@/components";
 import type { ThemePreference } from "@modules/account";
@@ -188,3 +196,4 @@ function formatSyncedAt(iso: string): string {
     return iso;
   }
 }
+*/

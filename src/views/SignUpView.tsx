@@ -1,6 +1,15 @@
+/**
+ * TODO DELETED — extracted to `src/routes/sign-up.tsx`. Remove this file when safe.
+ */
+export function SignUpView() {
+  return null;
+}
+
+/*
 import { useState } from "react";
 import { Button, Input, SecretInput } from "@/components";
 import { AuthScreenLayout } from "@/views/auth/AuthScreenLayout";
+import { CgSpinnerTwo } from "react-icons/cg";
 
 interface SignUpViewProps {
   onSignUp: (input: {
@@ -97,9 +106,16 @@ export function SignUpView({
           </p>
         ) : null}
         <Button type="submit" variant="primary" className="h-9 w-full" disabled={busy}>
-          {busy ? "Creating account…" : "Create account"}
+          {busy 
+          ? <>
+            <p>Creating account…</p>
+            <CgSpinnerTwo className="animate-spin" />
+          </> 
+          : <p>Create account</p>
+          }
         </Button>
       </form>
     </AuthScreenLayout>
   );
 }
+*/

@@ -4,13 +4,21 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(() => ({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    tanstackRouter({
+      target:'react',
+      autoCodeSplitting:true,
+    }),
+    react(), 
+    tailwindcss()
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),

@@ -1,8 +1,8 @@
 # Implementation Plan — Endpt
 
 **Status:** Active
-**Version:** 1.0
-**Last checked:** 2026-10-31
+**Version:** 1.1
+**Last checked:** 2026-11-01
 **Source of truth:** [PRD.md](./PRD.md)
 **Supporting docs:** [ARCHITECTURE.md](./ARCHITECTURE.md), [DATA_MODEL.md](./DATA_MODEL.md), [UI_UX_SPEC.md](./UI_UX_SPEC.md) (v1.0)
 
@@ -25,6 +25,8 @@
 
 **UI surface (UI/UX Spec v1.0):** 4 views (Workspace, Collections, Environment, Settings), 2 auth screens (Sign In, Sign Up), and overlays (Response fullscreen, Save Request dialog, Variables drawer, create/rename/delete dialogs).
 
+**Navigation:** Screens are **TanStack Router** file routes under `src/routes/` (URL-backed). Shared shell state uses `ApplicationProvider` in `src/state-management/`. Legacy `useState<AppView>` / `setView` navigation in `App.tsx` is retired (TODO DELETED).
+
 ---
 
 ## 2. Implementation Principles
@@ -32,6 +34,7 @@
 - **PRD first:** Prefer PRD + DATA_MODEL over UI_UX_SPEC and ARCHITECTURE where they conflict.
 - **KISS:** No Domain Layer, no DI framework (ADR-003, ADR-004). Add folders only when a file needs them.
 - **Layering:** Presentation → Application → Ports ← Infrastructure. Presentation never calls Fetch or any transport directly.
+- **Router owns screens:** Navigate with TanStack Router (`navigate` / `Link`), not a hardcoded view enum in React state ([ADR-008](./ARCHITECTURE.md#adr-008-tanstack-router-instead-of-in-memory-view-state)).
 - **Ad-hoc first:** Sending a request never requires a project, collection, account, or network setup (FR-01, AC-01).
 - **Local-first:** Core flows work offline. Sync is optional and never blocks the UI (FR-16, FR-18, NFR-03).
 - **Separate concerns:** HTTP execution and persistence stay separate. Sending does not write through the network client into storage.
@@ -56,7 +59,7 @@ Aligned with DATA_MODEL §8 and ARCHITECTURE §12. Create only the folders you n
 | Project | `modules/project` | `Project`, `Collection`, Collections UI, Save dialog | FR-19–21 |
 | Sync | `modules/sync` | Sync engine, tombstones, last-write-wins, status | FR-16, FR-18 |
 | Persistence | `modules/persistence` | Local storage adapters, secret encryption | NFR-02, NFR-03 |
-| Shell | `src/` | Tauri bootstrap, navigation, header, theme, composition root | NFR-01, NFR-04, NFR-05 |
+| Shell | `src/` | Tauri bootstrap, TanStack Router routes, header/sidebar, theme, composition root, application context | NFR-01, NFR-04, NFR-05 |
 
 ```text
 modules/
@@ -64,7 +67,7 @@ modules/
 │   ├── application/services/request.service.ts
 │   ├── infrastructure/network/
 │   │   ├── fetch-http-client.ts
-│   │   └── tauri-http-client.ts        # added if Phase 2 spike chooses it
+│   │   └── tauri-http-client.ts
 │   ├── ports/http-client.interface.ts
 │   ├── presentation/                    # builder UI
 │   └── types/http.types.ts
@@ -74,7 +77,15 @@ modules/
 ├── project/
 ├── sync/
 └── persistence/
-src/                                     # app shell + composition root
+src/
+├── app/                     # composition root + VIEW_TO / MAIN_NAV
+├── routes/                  # TanStack Router file routes
+│   ├── application/         # layout + workspace|collections|environment|settings
+│   ├── sign-in.tsx
+│   └── sign-up.tsx
+├── state-management/        # ApplicationProvider context for child routes
+├── shell/
+└── views/                   # shared panels/dialogs (page *View.tsx → TODO DELETED)
 ```
 
 Each module owns repository **ports** in its own `ports/` folder. Concrete storage implementations live in `modules/persistence/`.
@@ -182,10 +193,11 @@ Load language packs lazily so startup stays under the 350 ms target.
 
 UI v1.0 disables **Send** while a request is in flight and has no Cancel button. `RequestService` still tags each send with a token and ignores results from superseded sends, which covers ARCHITECTURE §11 without adding cancel UI.
 
-### 4.6 State management
+### 4.6 State management and navigation
 
 - Workspace state is a discriminated union (`SendState`, `SaveState`, unresolved placeholders), per UI/UX Spec §16.
-- Use a small store (for example Zustand) for shared state: active draft, last response, session, sync status.
+- Shared shell state (draft, send, session-derived fields, projects, env vars, preferences, sync helpers) lives in the `/application` layout and is passed to child routes via `ApplicationProvider` (`src/state-management/application-context.tsx`).
+- **Screen navigation uses TanStack Router**, not `useState` view switching. Paths are defined in `src/app/navigation.ts` (`VIEW_TO`). Auth and main views are separate routes; overlays (Variables drawer, Save dialog, fullscreen, Cloud link) stay on the application layout.
 - Component-local state for editors, tabs, and drawers.
 
 ---
@@ -209,6 +221,7 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 - [x] Open directly into the Workspace (action-first)
 - [x] Set up composition root (`src/`) with manual injection
 - [x] Document `pnpm tauri dev` and build in the README
+- [x] **(Post-MVP)** Migrate shell navigation from `useState<AppView>` / `setView` to TanStack Router file routes; extract page views into `src/routes/`; share layout state via `ApplicationProvider` (ARCHITECTURE ADR-008)
 
 **Acceptance criteria:**
 
@@ -216,6 +229,7 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 - Four views are navigable; theme switches between light and dark
 - No browser-extension manifest or popup-only entry points
 - UX-WS-01, UX-A11Y-01 (focus and keyboard on shell controls)
+- Screens are route-backed (`/application/*`, `/sign-in`, `/sign-up`); no live `setView` navigation
 
 **PRD:** Constraints, NFR-01, NFR-04, NFR-05.
 **Dependencies:** None.
@@ -480,6 +494,33 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 
 ---
 
+### Phase 10: TanStack Router migration (navigation)
+
+**Goal:** Replace hardcoded `useState` view switching with URL-backed TanStack Router routes.
+
+**Tasks:**
+
+- [x] Add TanStack Router + file route tree; mount `RouterProvider` from `src/main.tsx`
+- [x] Move application shell to `src/routes/application/route.tsx` (sidebar, header, overlays, shared hooks)
+- [x] Extract Workspace, Collections, Environment, Settings page UI into child routes under `/application/*`
+- [x] Extract Sign In / Sign Up into `/sign-in` and `/sign-up`
+- [x] Replace `setView` / `onNavigate` with `navigate` / `Link` and `VIEW_TO` path helpers
+- [x] Introduce `ApplicationProvider` (`src/state-management/application-context.tsx`) for child-route access to shared shell state
+- [x] Mark legacy `src/App.tsx` and page-level `*View.tsx` files as **TODO DELETED**
+- [x] Update ARCHITECTURE (ADR-008, stack, structure, state) and this plan
+
+**Acceptance criteria:**
+
+- All former `AppView` screens are reachable by route path
+- Sidebar and auth redirects use the router (no live `setView`)
+- Shared overlays still work from the application layout
+- Docs describe the new navigation model
+
+**PRD:** NFR-04 (usability / navigation), NFR-01 (shell responsiveness).
+**Dependencies:** Phases 0–9 (MVP shell and views already shipped).
+
+---
+
 ## 6. Dependencies and Parallel Tracks
 
 | Phase | Depends on |
@@ -494,8 +535,9 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 | 7 Projects and collections | 1, 3, 6 |
 | 8 Cloud sync | 1, 5, 6, 7 |
 | 9 Release | 0–8 |
+| 10 TanStack Router migration | 0–9 |
 
-After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environment (5)**, **Accounts (6)**. Then **Projects (7)** → **Sync (8)** → **Release (9)**.
+After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environment (5)**, **Accounts (6)**. Then **Projects (7)** → **Sync (8)** → **Release (9)**. **Phase 10** refactors navigation after MVP.
 
 ---
 
@@ -591,6 +633,9 @@ A task is done when:
 | ~~DATA_MODEL~~ | ~~`ResponseView.size` derived~~ — **Done** |
 | ~~UI_UX_SPEC~~ | ~~Open decisions 1–6~~ — **Done** (Phase 9) |
 | ~~PRD~~ | ~~Add a sync backend requirement~~ — **Done:** FR-16 references Firebase / ADR-006 |
+| ~~ARCHITECTURE §4 / §8 / §12 / ADR-008~~ | ~~Document TanStack Router migration~~ — **Done** (Phase 10) |
+| ~~IMPLEMENTATION_PLAN §1 / §4.6 / Phase 10~~ | ~~Record navigation migration from `setView` to routes~~ — **Done** |
+| App.tsx + page `*View.tsx` | Delete files marked **TODO DELETED** when no longer needed for reference |
 
 ---
 
@@ -598,7 +643,7 @@ A task is done when:
 
 | Phase | Status | Done | Notes |
 |---|---|---:|---|
-| 0 Foundation, shell, design system | Completed | 11/11 | Shell + Stitch tokens/UI shells; mock data only; no HTTP/persistence yet |
+| 0 Foundation, shell, design system | Completed | 12/12 | Shell + Stitch tokens/UI shells; later TanStack Router task checked under Phase 0 / Phase 10 |
 | 1 Persistence and secrets | Completed | 9/9 | SQLite + keychain encryption; guest draft/env persist |
 | 2 Request engine and resolver | Completed | 13/13 | Tauri HTTP plugin in production; Fetch for tests and non-desktop runs |
 | 3 Workspace and builder UI | Completed | 12/12 | Wired to RequestService; SendState + URL↔params + placeholders |
@@ -608,6 +653,7 @@ A task is done when:
 | 7 Projects and collections | Completed | 9/9 | ProjectService + Collections tree + Save dialog; cascade soft-delete; Workspace bind/open/resave |
 | 8 Cloud sync | Completed | 9/9 | Firebase Auth + Firestore; SyncRemote + LWW engine |
 | 9 Integration and release | Completed | 10/10 | Playwright E2E (Vite harness); perf notes; a11y/security pass; Linux release build |
+| 10 TanStack Router migration | Completed | 8/8 | File routes + ApplicationProvider; legacy App/`*View` marked TODO DELETED |
 
 **Status values:** `Not Started`, `In Progress`, `Blocked`, `Completed`.
 

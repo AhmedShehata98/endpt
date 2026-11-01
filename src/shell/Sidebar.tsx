@@ -1,16 +1,18 @@
 import { Button } from "@/components";
-import { MAIN_NAV, type AppView } from "@/app/navigation";
+import { MAIN_NAV } from "@/app/navigation";
 import { LogoMark } from "./LogoMark";
 import { cn } from "@/lib/cn";
+import { Link } from '@tanstack/react-router';
 
 interface SidebarProps {
-  activeView: AppView;
   collapsed: boolean;
-  onNavigate: (view: AppView) => void;
   onNewRequest: () => void;
 }
 
-export function Sidebar({ activeView, collapsed, onNavigate, onNewRequest }: SidebarProps) {
+export function Sidebar({ collapsed, onNewRequest }: SidebarProps) {
+  const settings = MAIN_NAV.find((item) => item.id === "settings");
+  const SettingsIcon = settings?.icon;
+
   return (
     <aside
       className={cn(
@@ -44,53 +46,55 @@ export function Sidebar({ activeView, collapsed, onNavigate, onNewRequest }: Sid
 
       <nav className="flex flex-1 flex-col gap-0.5 p-2" aria-label="Main">
         {MAIN_NAV.filter((item) => item.id !== "settings").map((item) => {
-          const active = activeView === item.id;
+          const Icon = item.icon;
           return (
-            <button
+            <Link
               key={item.id}
-              type="button"
+              to={item.to}
               title={item.label}
               aria-label={item.label}
-              aria-current={active ? "page" : undefined}
-              onClick={() => onNavigate(item.id)}
+              activeProps={{
+                className: "bg-accent-subtle text-accent",
+                "aria-current": 'page'
+              }}
+              inactiveProps={{
+                className: "text-text-secondary hover:bg-bg-subtle hover:text-text-primary",
+              }} 
               className={cn(
                 "flex h-8 items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium transition-colors",
-                collapsed && "justify-center px-0",
-                active
-                  ? "bg-accent-subtle text-accent"
-                  : "text-text-secondary hover:bg-bg-subtle hover:text-text-primary",
+                collapsed && "justify-center px-0", 
               )}
             >
-              <span aria-hidden className="w-4 text-center text-xs">
-                {item.icon}
-              </span>
+              <Icon aria-hidden className="size-4 shrink-0" />
               {!collapsed && item.label}
-            </button>
+            </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-border-default p-2">
-        <button
-          type="button"
-          title="Settings"
-          aria-label="Settings"
-          aria-current={activeView === "settings" ? "page" : undefined}
-          onClick={() => onNavigate("settings")}
-          className={cn(
-            "flex h-8 w-full items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium transition-colors",
-            collapsed && "justify-center px-0",
-            activeView === "settings"
-              ? "bg-accent-subtle text-accent"
-              : "text-text-secondary hover:bg-bg-subtle hover:text-text-primary",
-          )}
-        >
-          <span aria-hidden className="w-4 text-center text-xs">
-            ⚙
-          </span>
-          {!collapsed && "Settings"}
-        </button>
-      </div>
+      {settings && SettingsIcon && (
+        <div className="border-t border-border-default p-2">
+          <Link
+            to={settings.to}
+            title={settings.label}
+            aria-label={settings.label}
+            activeProps={{
+              className: "bg-accent-subtle text-accent",
+              "aria-current": 'page'
+            }}
+            inactiveProps={{
+              className: "text-text-secondary hover:bg-bg-subtle hover:text-text-primary",
+            }}
+            className={cn(
+              "flex h-8 w-full items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium transition-colors",
+              collapsed && "justify-center px-0",
+            )}
+          >
+            <SettingsIcon aria-hidden className="size-4 shrink-0" />
+            {!collapsed && settings.label}
+          </Link>
+        </div>
+      )}
     </aside>
   );
 }

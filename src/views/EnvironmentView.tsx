@@ -1,3 +1,11 @@
+/**
+ * TODO DELETED — extracted to `src/routes/application/environment.tsx`. Remove this file when safe.
+ */
+export function EnvironmentView() {
+  return null;
+}
+
+/*
 import { useCallback, useState } from "react";
 import {
   ENV_VAR_ROLE_DEFAULT_KEYS,
@@ -53,3 +61,4 @@ export function EnvironmentView({ variables, onVariablesChange }: EnvironmentVie
     </>
   );
 }
+*/

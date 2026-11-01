@@ -1,3 +1,11 @@
+/**
+ * TODO DELETED — extracted to `src/routes/application/workspace.tsx`. Remove this file when safe.
+ */
+export function WorkspaceView() {
+  return null;
+}
+
+/*
 import type { Ref } from "react";
 import { MethodBadge, SplitPanel } from "@/components";
 import type { RequestDraft } from "@modules/request";
@@ -75,3 +83,4 @@ export function WorkspaceView({
     </div>
   );
 }
+*/

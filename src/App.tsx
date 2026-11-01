@@ -1,3 +1,18 @@
+/**
+ * TODO DELETED — migrated to TanStack Router. Remove this file when safe.
+ * Live entry: `src/main.tsx` → route tree.
+ * - shell / shared state: `src/routes/application/route.tsx`
+ * - workspace: `src/routes/application/workspace.tsx`
+ * - collections: `src/routes/application/collections.tsx`
+ * - environment: `src/routes/application/environment.tsx`
+ * - settings: `src/routes/application/settings.tsx`
+ * - auth: `src/routes/sign-in.tsx`, `src/routes/sign-up.tsx`
+ */
+export default function App() {
+  return null;
+}
+
+/*
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AccountService } from "@modules/account";
 import type { ProjectService } from "@modules/project";
@@ -486,3 +501,4 @@ export default function App() {
     </div>
   );
 }
+*/

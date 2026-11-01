@@ -1,3 +1,11 @@
+/**
+ * TODO DELETED — extracted to `src/routes/application/collections.tsx`. Remove this file when safe.
+ */
+export function CollectionsView() {
+  return null;
+}
+
+/*
 import { useMemo, useState } from "react";
 import type { CascadeCounts, CascadeTarget, ProjectNode } from "@modules/project";
 import { Button, Dialog, EmptyState, Input, MethodBadge } from "@/components";
@@ -482,3 +490,4 @@ function RowActions({
     </div>
   );
 }
+*/
