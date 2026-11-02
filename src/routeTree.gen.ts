@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApplicationRouteRouteImport } from './routes/application/route'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as ApplicationIndexRouteImport } from './routes/application/index'
 import { Route as ApplicationCollectionsRouteImport } from './routes/application/collections'
 import { Route as ApplicationEnvironmentRouteImport } from './routes/application/environment'
 import { Route as ApplicationSettingsRouteImport } from './routes/application/settings'
@@ -37,6 +38,11 @@ const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
   path: '/sign-up',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ApplicationIndexRoute = ApplicationIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ApplicationRouteRoute,
 } as any)
 const ApplicationCollectionsRoute = ApplicationCollectionsRouteImport.update({
   id: '/collections',
@@ -68,16 +74,17 @@ export interface FileRoutesByFullPath {
   '/application/environment': typeof ApplicationEnvironmentRoute
   '/application/settings': typeof ApplicationSettingsRoute
   '/application/workspace': typeof ApplicationWorkspaceRoute
+  '/application/': typeof ApplicationIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/application': typeof ApplicationRouteRouteWithChildren
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/application/collections': typeof ApplicationCollectionsRoute
   '/application/environment': typeof ApplicationEnvironmentRoute
   '/application/settings': typeof ApplicationSettingsRoute
   '/application/workspace': typeof ApplicationWorkspaceRoute
+  '/application': typeof ApplicationIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +96,7 @@ export interface FileRoutesById {
   '/application/environment': typeof ApplicationEnvironmentRoute
   '/application/settings': typeof ApplicationSettingsRoute
   '/application/workspace': typeof ApplicationWorkspaceRoute
+  '/application/': typeof ApplicationIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,16 +109,17 @@ export interface FileRouteTypes {
     | '/application/environment'
     | '/application/settings'
     | '/application/workspace'
+    | '/application/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/application'
     | '/sign-in'
     | '/sign-up'
     | '/application/collections'
     | '/application/environment'
     | '/application/settings'
     | '/application/workspace'
+    | '/application'
   id:
     | '__root__'
     | '/'
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/application/environment'
     | '/application/settings'
     | '/application/workspace'
+    | '/application/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -160,6 +170,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/application/': {
+      id: '/application/'
+      path: '/'
+      fullPath: '/application/'
+      preLoaderRoute: typeof ApplicationIndexRouteImport
+      parentRoute: typeof ApplicationRouteRoute
+    }
     '/application/collections': {
       id: '/application/collections'
       path: '/collections'
@@ -196,6 +213,7 @@ interface ApplicationRouteRouteChildren {
   ApplicationEnvironmentRoute: typeof ApplicationEnvironmentRoute
   ApplicationSettingsRoute: typeof ApplicationSettingsRoute
   ApplicationWorkspaceRoute: typeof ApplicationWorkspaceRoute
+  ApplicationIndexRoute: typeof ApplicationIndexRoute
 }
 
 const ApplicationRouteRouteChildren: ApplicationRouteRouteChildren = {
@@ -203,6 +221,7 @@ const ApplicationRouteRouteChildren: ApplicationRouteRouteChildren = {
   ApplicationEnvironmentRoute: ApplicationEnvironmentRoute,
   ApplicationSettingsRoute: ApplicationSettingsRoute,
   ApplicationWorkspaceRoute: ApplicationWorkspaceRoute,
+  ApplicationIndexRoute: ApplicationIndexRoute,
 }
 
 const ApplicationRouteRouteWithChildren =
