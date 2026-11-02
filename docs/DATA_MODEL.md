@@ -165,21 +165,21 @@ Request under a collection (FR-21, AC-19).
 
 ### 2.9 EnvironmentVariable
 
-PRD scopes env vars to auth token, API key, username/password, and base URL (FR-11–FR-14, AC-11, AC-12). Flat per user — no separate “Environment” entity for MVP (KISS).
+PRD scopes suggested roles to auth token, API key, username/password, and base URL (FR-11–FR-14, AC-11, AC-12), and also allows freeform custom keys (FR-14a, AC-11a). Flat per user — no separate “Environment” entity for MVP (KISS).
 
 | Field | Type | Notes |
 |-------|------|--------|
 | `id` | UUID | |
 | `userId` | UUID | FK → UserAccount |
-| `key` | string | Unique per user; e.g. `authToken`, `apiKey`, `username`, `password`, `baseUrl` |
-| `value` | string | Secret; encrypt at rest (NFR-02) |
-| `role` | EnvVarRole | Semantic role for UI / defaults |
+| `key` | string | Unique per user among non-deleted rows; must match `^[A-Za-z_][A-Za-z0-9_]*$` |
+| `value` | string | Encrypt at rest (NFR-02); secret roles are masked in UI |
+| `role` | EnvVarRole | Semantic role for UI / defaults / masking |
 | `updatedAt` | datetime | |
 | `deletedAt` | datetime \| null | Sync tombstone |
 
-**`EnvVarRole`:** `authToken` \| `apiKey` \| `username` \| `password` \| `baseUrl`
+**`EnvVarRole`:** `authToken` \| `apiKey` \| `username` \| `password` \| `baseUrl` \| `custom`
 
-Custom keys beyond these five are out of MVP unless needed for placeholder resolution; prefer the five PRD roles first.
+**Fixed roles** (`authToken`, `apiKey`, `username`, `password`, `baseUrl`) propose default keys. **`custom`** requires a user-chosen key. Secret masking applies to the four auth fixed roles only; `baseUrl` and `custom` are unmasked by default.
 
 ### 2.10 ResponseView (runtime / UI state)
 
@@ -210,7 +210,7 @@ Fullscreen (FR-10) is UI state over this object, not a separate record.
 | `HttpMethod` | `GET`, `POST`, `PUT`, `PATCH`, `DELETE` | FR-02 |
 | `BodyType` | `none`, `json`, `raw` | FR-04 (MVP; keep small) |
 | `AuthType` | `bearerToken`, `apiKey`, `basic` | Constraints; use with `AuthConfig.enabled` |
-| `EnvVarRole` | `authToken`, `apiKey`, `username`, `password`, `baseUrl` | FR-11–FR-14 |
+| `EnvVarRole` | `authToken`, `apiKey`, `username`, `password`, `baseUrl`, `custom` | FR-11–FR-14, FR-14a |
 
 ---
 
@@ -222,6 +222,7 @@ Fullscreen (FR-10) is UI state over this object, not a separate record.
 | Optional hierarchy | Ad-hoc requests never require `projectId` / `collectionId` |
 | Cascade delete | Delete project → collections → saved requests; delete user vars with user (or soft-delete) |
 | Unique env keys | (`userId`, `key`) unique among non-deleted rows |
+| Valid env keys | Key required; pattern `^[A-Za-z_][A-Za-z0-9_]*$` (`isValidEnvKey`) |
 | Placeholder resolution | Before send, replace `{{key}}` in URL, params, headers, body, and auth fields from the user’s env vars (AC-12) |
 | Auth | Applied only when `auth.enabled`; maps to Bearer / API-key header / Basic |
 | Body | Sent only when method supports a body and `bodyType ≠ none` (AC-04) |
@@ -272,7 +273,7 @@ Per PRD §2 / §6:
 | FR-01 / AC-01–02 | `AdHocRequest` |
 | FR-02–07 / AC-03–07 | `RequestDraft` + `AuthConfig` |
 | FR-08–10 / AC-08–10 | `ResponseView` (runtime) |
-| FR-11–14 / AC-11–12 | `EnvironmentVariable` + `EnvVarRole` |
+| FR-11–14, FR-14a / AC-11–12, AC-11a | `EnvironmentVariable` + `EnvVarRole` (incl. `custom`) |
 | FR-15 / AC-13 | `UserAccount` + `Session` |
 | FR-16–18 / AC-15–16 | Local-first + sync rules |
 | FR-17 / AC-14 | `UserSettings` |

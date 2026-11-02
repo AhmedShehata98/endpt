@@ -50,6 +50,7 @@
 - **FR-12:** The user can add an environment variable for an auth API key.
 - **FR-13:** The user can add an environment variable for auth username and password.
 - **FR-14:** The user can add an environment variable for a base URL.
+- **FR-14a:** The user can add a custom environment variable with a freeform key (letters, numbers, underscore; must start with a letter or `_`) for use as `{{key}}` placeholders.
 - **FR-15:** The user can sign up or sign in to an account.
 - **FR-16:** The user account is local-first and can sync to the cloud. Cloud sync uses Firebase Authentication and Cloud Firestore; it is optional; data in transit uses TLS; secret fields are client-encrypted before upload ([ADR-006](./adr/ADR-006-firebase-sync.md)).
 - **FR-17:** The account stores the user’s personal information, including user settings and preferences.
@@ -87,6 +88,7 @@
 
 ### Environment Variables
 - **AC-11:** Given the environment settings are open, when the user adds variables for auth token, API key, username/password, or base URL, then those values can be used in subsequent requests.
+- **AC-11a:** Given the environment settings are open, when the user adds a custom variable with a unique valid key, then that value can be referenced as `{{key}}` in subsequent requests.
 - **AC-12:** Given environment variables are set, when the user sends a request that references them, then the request uses the resolved variable values.
 
 ### Accounts & Preferences
@@ -119,7 +121,7 @@
 - Users primarily work on desktop platforms supported by Tauri
 - Local disk storage is available and writable for local-first data
 - Cloud sync is optional; users can complete core workflows without an account or network
-- Environment variables are enough to manage common auth and base URL values across requests
+- Environment variables cover common auth and base URL values, plus optional custom keys for other placeholders
 - Most responses users care about are JSON or HTML
 - A single-user account model is sufficient; team or shared workspaces are not required in this version
 

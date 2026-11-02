@@ -1,10 +1,10 @@
 # Implementation Plan — Endpt
 
 **Status:** Active
-**Version:** 1.1
-**Last checked:** 2026-11-01
+**Version:** 1.2
+**Last checked:** 2026-11-02
 **Source of truth:** [PRD.md](./PRD.md)
-**Supporting docs:** [ARCHITECTURE.md](./ARCHITECTURE.md), [DATA_MODEL.md](./DATA_MODEL.md), [UI_UX_SPEC.md](./UI_UX_SPEC.md) (v1.0)
+**Supporting docs:** [ARCHITECTURE.md](./ARCHITECTURE.md), [DATA_MODEL.md](./DATA_MODEL.md), [UI_UX_SPEC.md](./UI_UX_SPEC.md) (v1.1)
 
 > Rule: if any document conflicts with the PRD, the PRD wins. Do not build anything listed in section 7 (Out of Scope).
 
@@ -18,12 +18,12 @@
 
 - Ad-hoc HTTP requests (REST only)
 - Response viewing (prettify, highlight, copy, fullscreen)
-- Environment variables (five fixed roles)
+- Environment variables (five suggested roles + custom keys)
 - Optional accounts, settings, and preferences
 - Local-first storage with optional cloud sync
 - Project → Collection → Request organization
 
-**UI surface (UI/UX Spec v1.0):** 4 views (Workspace, Collections, Environment, Settings), 2 auth screens (Sign In, Sign Up), and overlays (Response fullscreen, Save Request dialog, Variables drawer, create/rename/delete dialogs).
+**UI surface (UI/UX Spec v1.1):** 4 views (Workspace, Collections, Environment, Settings), 2 auth screens (Sign In, Sign Up), and overlays (Response fullscreen, Save Request dialog, Variables drawer, Add Variable dialog with custom keys, create/rename/delete dialogs).
 
 **Navigation:** Screens are **TanStack Router** file routes under `src/routes/` (URL-backed). Shared shell state uses `ApplicationProvider` in `src/state-management/`. Legacy `useState<AppView>` / `setView` navigation in `App.tsx` is retired (TODO DELETED).
 
@@ -310,7 +310,8 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 - [x] Request row: method selector (default from `UserSettings.defaultHttpMethod`), URL field, **Send**
 - [x] Placeholder styling in fields: resolved vs **Not defined** with **Fix variable** action
 - [x] Tabs: **Params**, **Headers**, **Body**, **Auth**
-- [x] Key/value editors with enable/disable, explicit **Add** action, URL ↔ params sync that does not delete unrelated params
+- [x] Key/value editors with enable/disable, explicit **Add** action (disabled until last row has key+value), URL ↔ params sync that does not delete unrelated params
+- [x] `MentionInput` on pair values: type `{{` to pick env keys; secret keys show masked previews
 - [x] Body: None / JSON / Raw editor, inline JSON validation, disabled state for GET with explanation
 - [x] Auth: enable toggle and Token / API key / Username-password fields, masked with reveal
 - [x] Send states: idle, invalid (inline errors), sending (**Sending…**, duplicate sends blocked), HTTP response, network failure with **Try again**
@@ -360,27 +361,28 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 
 ### Phase 5: Environment Variables (View and Drawer)
 
-**Goal:** Manage the five PRD roles and use them in requests (UI §7).
+**Goal:** Manage the five suggested PRD roles plus custom keys, and use them in requests (UI §7).
 
 **Tasks:**
 
-- [x] **Environment** view: table of Role, Key, Value, row actions; **Add variable** starts with role selection and proposes the default key
-- [x] Roles: `authToken`, `apiKey`, `username`, `password`, `baseUrl` (FR-11–14)
-- [x] Mask secret roles with an explicit reveal and hide; `baseUrl` unmasked
+- [x] **Environment** view: table of Role, Key, Value, row actions; **Add variable** opens Suggested + Custom sections
+- [x] Fixed roles: `authToken`, `apiKey`, `username`, `password`, `baseUrl` (FR-11–14); `custom` freeform keys (FR-14a)
+- [x] Key validation via `isValidEnvKey` (`^[A-Za-z_][A-Za-z0-9_]*$`); empty and invalid keys rejected
+- [x] Mask secret roles with an explicit reveal and hide; `baseUrl` and `custom` unmasked
 - [x] Inline validation: duplicate keys rejected
 - [x] Distinguish missing from defined-but-empty values
-- [x] **Variables drawer** from the header and from **Fix variable**; reuses the same editor; prompt before closing with unsaved edits
+- [x] **Variables drawer** from the header and from **Fix variable**; reuses the same editor; prompt before closing with unsaved edits; Fix may prefer custom with key prefilled
 - [x] Header count of unresolved placeholders
 - [x] Storage-truth copy: encrypted on device; synced only when sync is enabled
-- [x] Never show secrets in tooltips, toasts, or logs
+- [x] Never show secrets in tooltips, toasts, mention popovers, or logs
 
 **Acceptance criteria:**
 
-- AC-11, AC-12, AC-15 (offline create and edit)
-- UX-ENV-01–03, UX-WS-06, UX-WS-07
+- AC-11, AC-11a, AC-12, AC-15 (offline create and edit)
+- UX-ENV-01, UX-ENV-01a, UX-ENV-02–03, UX-WS-06, UX-WS-07
 - Flow B (fix an unresolved variable) works without leaving the request
 
-**PRD:** FR-11–14.
+**PRD:** FR-11–14, FR-14a.
 **Dependencies:** Phases 1–3.
 
 ---
@@ -591,7 +593,7 @@ After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environm
 | 4 | Body editor allowed for DELETE? | Phase 2–3 | Yes; only GET is disabled |
 | 5 | Do guests persist preferences? | ~~Phase 6~~ | **Resolved:** No; in-session tweaks allowed, never persisted; relaunch uses defaults |
 | 6 | Saved requests: explicit save or autosave | ~~Phase 7~~ | **Resolved:** Explicit **Save Request** only; in-place update when already bound |
-| 7 | Custom variable keys beyond the five roles | Phase 5 | Not allowed |
+| 7 | Custom variable keys beyond the five roles | ~~Phase 5~~ | **Resolved:** Allowed — `EnvVarRole.custom` + `isValidEnvKey` (FR-14a / UI_UX_SPEC decision 4) |
 
 ### Risks
 
@@ -632,6 +634,7 @@ A task is done when:
 | ~~ARCHITECTURE §11~~ | ~~Stale-send token; no Cancel~~ — **Done** |
 | ~~DATA_MODEL~~ | ~~`ResponseView.size` derived~~ — **Done** |
 | ~~UI_UX_SPEC~~ | ~~Open decisions 1–6~~ — **Done** (Phase 9) |
+| ~~PRD / DATA_MODEL / UI_UX_SPEC / IMPLEMENTATION_PLAN~~ | ~~Custom env vars + pair fill-before-add + MentionInput~~ — **Done** (2026-11-02) |
 | ~~PRD~~ | ~~Add a sync backend requirement~~ — **Done:** FR-16 references Firebase / ADR-006 |
 | ~~ARCHITECTURE §4 / §8 / §12 / ADR-008~~ | ~~Document TanStack Router migration~~ — **Done** (Phase 10) |
 | ~~IMPLEMENTATION_PLAN §1 / §4.6 / Phase 10~~ | ~~Record navigation migration from `setView` to routes~~ — **Done** |
@@ -646,9 +649,9 @@ A task is done when:
 | 0 Foundation, shell, design system | Completed | 12/12 | Shell + Stitch tokens/UI shells; later TanStack Router task checked under Phase 0 / Phase 10 |
 | 1 Persistence and secrets | Completed | 9/9 | SQLite + keychain encryption; guest draft/env persist |
 | 2 Request engine and resolver | Completed | 13/13 | Tauri HTTP plugin in production; Fetch for tests and non-desktop runs |
-| 3 Workspace and builder UI | Completed | 12/12 | Wired to RequestService; SendState + URL↔params + placeholders |
+| 3 Workspace and builder UI | Completed | 13/13 | Wired to RequestService; SendState + URL↔params + placeholders; PairEditor fill-before-add; MentionInput |
 | 4 Response viewer | Completed | 10/10 | CodeMirror 6 + prettify; copy uses raw body; fullscreen focus restore |
-| 5 Environment variables | Completed | 9/9 | Shared editor + Variables drawer draft/Apply; Fix variable Flow B |
+| 5 Environment variables | Completed | 10/10 | Shared editor + Variables drawer; custom keys (FR-14a); Fix variable Flow B |
 | 6 Accounts and settings | Completed | 7/7 | Argon2 local auth + Session restore; UserSettings persist when signed in; guests defaults-only |
 | 7 Projects and collections | Completed | 9/9 | ProjectService + Collections tree + Save dialog; cascade soft-delete; Workspace bind/open/resave |
 | 8 Cloud sync | Completed | 9/9 | Firebase Auth + Firestore; SyncRemote + LWW engine |

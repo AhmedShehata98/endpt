@@ -82,7 +82,7 @@ App present solution for backend (API) Integration and testing easier with light
 ## 2. Requirements & Constraints
 
 ### Functional Requirements
-See [`PRD.md`](./PRD.md). Core to this architecture: ad-hoc HTTP requests (FR-01–FR-07), response viewing (FR-08–FR-10), environment variables (FR-11–FR-14), local-first data with optional sync (FR-15–FR-18), and Project → Collection → Request (FR-19–FR-21).
+See [`PRD.md`](./PRD.md). Core to this architecture: ad-hoc HTTP requests (FR-01–FR-07), response viewing (FR-08–FR-10), environment variables (FR-11–FR-14, FR-14a custom keys), local-first data with optional sync (FR-15–FR-18), and Project → Collection → Request (FR-19–FR-21).
 
 ### Non-Functional Requirements
 - **Performance:** Responsive UI; lightweight request/response handling (NFR-01; Architecture Goals §5).

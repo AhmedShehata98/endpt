@@ -1,8 +1,8 @@
 # UI/UX Specification — Endpt
 
 **Document type:** Product UI/UX specification
-**Version:** 1.0
-**Status:** MVP design baseline
+**Version:** 1.1
+**Status:** MVP design baseline (updated for custom env vars and pair editors)
 **Source of truth:** [PRD.md](./PRD.md). Supporting docs: [DATA_MODEL.md](./DATA_MODEL.md), [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
 **Platform:** Desktop only (Tauri 2 + React + TypeScript). No browser tab, no browser-extension side panel, no mobile.
 
@@ -38,7 +38,7 @@ Endpt is a lightweight desktop API client. It makes testing and integrating with
 - Ad-hoc requests without a project or collection
 - Authentication: token, API key, username/password
 - Response viewer: prettified output, syntax highlighting (JSON, HTML), copy, fullscreen
-- Environment variables: auth token, API key, username/password, base URL
+- Environment variables: auth token, API key, username/password, base URL, plus custom keys
 - Accounts: sign up / sign in, settings, preferences
 - Local-first storage, optional cloud sync, full offline use
 - Project → Collection → Request organization
@@ -167,15 +167,17 @@ Each tab may show a small count or state indicator (for example, number of enabl
 
 #### Params (FR-05, AC-05)
 
-- Editable rows: enabled checkbox, key, value, remove
+- Editable rows: enabled checkbox, key, value, remove (trash icon with clear destructive hover)
 - Disabled rows stay visible and are not sent
 - URL and params stay in sync. Editing the URL must not delete unrelated params
 - Explicit **Add parameter** action
-- Values may contain `{{key}}`
+- **Add next row** stays disabled until the last row has both a non-empty key and value (prevents empty trailing pairs)
+- Empty list shows a short empty state and the same Add action
+- Values may contain `{{key}}`. Typing `{{` in the value field opens an env-key mention popover (`MentionInput`); secret keys show masked previews
 
 #### Headers (FR-06, AC-06)
 
-- Same row pattern as Params
+- Same row pattern as Params (including fill-before-add and mention suggestions)
 - Values may contain `{{key}}`
 
 #### Body (FR-03, FR-04, AC-04)
@@ -320,7 +322,7 @@ No projects, project with no collections, collection with no requests, populated
 
 ## 7. View 3: Environment
 
-**Priority:** P1. Maps to FR-11–14, AC-11–12. Environment variables are a **flat set per user**, not named environments.
+**Priority:** P1. Maps to FR-11–14, FR-14a, AC-11–12, AC-11a. Environment variables are a **flat set per user**, not named environments.
 
 ### Layout
 
@@ -328,7 +330,7 @@ No projects, project with no collections, collection with no requests, populated
 - One table: **Role**, **Key**, **Value**, row actions
 - **Add variable** action
 
-### Roles (fixed)
+### Roles
 
 | Role | Default key | Purpose | Masked |
 |---|---|---|---|
@@ -337,15 +339,25 @@ No projects, project with no collections, collection with no requests, populated
 | Username | `username` | Basic auth username | Yes |
 | Password | `password` | Basic auth password | Yes |
 | Base URL | `baseUrl` | Prefix for request URLs | No |
+| Custom | *(user-chosen)* | Freeform `{{key}}` placeholder | No |
+
+Fixed roles (`authToken` … `baseUrl`) are **suggested** one-shots. Custom variables may be added at any time with a unique key.
+
+### Add variable dialog
+
+Two sections:
+
+1. **Suggested** — unused fixed roles; picking one creates that role with its default key. When all five are defined, show copy that custom variables can still be added below.
+2. **Custom variable** — key input + role select (any `EnvVarRole`, default `custom`) + **Add custom**. Inline errors for empty key, invalid pattern, or duplicate key.
 
 ### Rules
 
-- Adding a variable starts with choosing a role, which proposes the default key
-- Keys are unique per user (non-deleted rows). Show an inline validation error on duplicates
-- Values for secret roles are masked by default with an explicit reveal and hide control
-- Never show secret values in tooltips, toasts, logs, or examples
+- Keys must match `^[A-Za-z_][A-Za-z0-9_]*$` and are unique per user (non-deleted rows). Show inline validation on invalid or duplicate keys
+- Values for secret roles (`authToken`, `apiKey`, `username`, `password`) are masked by default with an explicit reveal and hide control
+- Never show secret values in tooltips, toasts, logs, mention popovers, or examples
 - Distinguish a **missing** variable from a **defined but empty** value
-- Use `{{key}}` in URLs, params, headers, body, and auth fields
+- Use `{{key}}` in URLs, params, headers, body, and auth fields; value fields that accept env hints offer a `{{` mention popover
+- **Fix variable** for an unknown key may open Add with the key prefilled and custom preferred
 - Switching views does not mutate saved request text
 - Copy states the storage truth: values are encrypted on this device, and synced only when sync is enabled
 
@@ -355,7 +367,7 @@ The same editor opens as a side drawer from the Workspace header or from a **Fix
 
 ### States
 
-No variables, populated, validation error, secret masked and revealed, unsaved changes.
+No variables, populated, validation error, secret masked and revealed, unsaved changes, all suggested roles already defined (custom still available).
 
 ---
 
@@ -647,8 +659,10 @@ Avoid vague messages such as "Something went wrong" when a specific reason is av
 | UX-RS-03 | Copy always places the full payload on the clipboard | AC-09 |
 | UX-RS-04 | Fullscreen opens the payload in a modal | AC-10 |
 | UX-ENV-01 | Variables can be added for token, API key, username/password, and base URL | AC-11 |
-| UX-ENV-02 | Secret values are masked by default and never exposed in tooltips or toasts | NFR-02 |
-| UX-ENV-03 | Duplicate keys are rejected inline | DATA_MODEL |
+| UX-ENV-01a | Custom variables can be added with a valid unique key | AC-11a / FR-14a |
+| UX-ENV-02 | Secret values are masked by default and never exposed in tooltips, toasts, or mention previews | NFR-02 |
+| UX-ENV-03 | Duplicate and invalid keys are rejected inline | DATA_MODEL |
+| UX-WS-11 | Params/Headers require the last row filled before Add is enabled | AC-05, AC-06 |
 | UX-CH-01 | Project, collection, and request hierarchy is browsable | AC-17–19 |
 | UX-CH-02 | Opening a saved request restores its draft for editing and resending | AC-19 |
 | UX-CH-03 | Signed-out users see a clear sign-in prompt, not a broken view | AC-17 |
@@ -738,7 +752,7 @@ For each interactive component, document default, hover, focus, disabled, loadin
 | 1 | Does the body editor allow DELETE? | **Resolved:** Yes. Only GET is disabled |
 | 2 | Do guests persist theme and other preferences? | **Resolved:** Guests use defaults; in-session tweaks allowed, never persisted |
 | 3 | Are saved requests autosaved or explicitly saved? | **Resolved:** Explicit **Save Request** only; in-place update when already bound |
-| 4 | Are custom variable keys beyond the five roles allowed? | **Resolved:** No (five PRD roles only) |
+| 4 | Are custom variable keys beyond the five roles allowed? | **Resolved:** Yes — `EnvVarRole` includes `custom`; freeform keys with `isValidEnvKey` (FR-14a) |
 | 5 | Response size threshold for the "Rendering…" indicator | **Resolved:** 50 000 characters (`useFormattedBody`) |
 | 6 | Export of sensitive data | **Resolved:** Not applicable (no export in MVP) |
 
