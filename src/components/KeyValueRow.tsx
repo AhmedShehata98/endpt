@@ -1,6 +1,8 @@
 import { Input } from "./Input";
+import { MentionInput } from "./MentionInput";
 import { Button } from "./Button";
 import { cn } from "@/lib/cn";
+import { IoTrashOutline } from "react-icons/io5";
 
 interface KeyValueRowProps {
   enabled: boolean;
@@ -10,6 +12,8 @@ interface KeyValueRowProps {
   onKeyChange: (key: string) => void;
   onValueChange: (value: string) => void;
   onRemove: () => void;
+  /** When set, value field offers `{{env}}` mention suggestions. */
+  envValues?: ReadonlyMap<string, string>;
   className?: string;
 }
 
@@ -21,8 +25,12 @@ export function KeyValueRow({
   onKeyChange,
   onValueChange,
   onRemove,
+  envValues,
   className,
 }: KeyValueRowProps) {
+  const valueClassName =
+    "h-7 border-transparent bg-transparent px-1.5 hover:border-border-default";
+
   return (
     <div
       className={cn(
@@ -44,21 +52,32 @@ export function KeyValueRow({
         placeholder="Key"
         className="h-7 border-transparent bg-transparent px-1.5 hover:border-border-default"
       />
-      <Input
-        mono
-        value={value}
-        onChange={(e) => onValueChange(e.target.value)}
-        placeholder="Value"
-        className="h-7 border-transparent bg-transparent px-1.5 hover:border-border-default"
-      />
+      {envValues ? (
+        <MentionInput
+          mono
+          value={value}
+          onChange={onValueChange}
+          envValues={envValues}
+          placeholder="Value"
+          className={valueClassName}
+        />
+      ) : (
+        <Input
+          mono
+          value={value}
+          onChange={(e) => onValueChange(e.target.value)}
+          placeholder="Value"
+          className={valueClassName}
+        />
+      )}
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 w-7 px-0 opacity-0 group-hover:opacity-100"
+        className="h-7 w-7 px-0 !bg-red-400/10 !text-red-700 group-hover:!bg-red-400/20"
         onClick={onRemove}
         aria-label="Remove row"
       >
-        ×
+        <IoTrashOutline className="text-red-500" size={16} />
       </Button>
     </div>
   );

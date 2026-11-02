@@ -1,6 +1,7 @@
 import { Button, KeyValueRow } from "@/components";
 import type { KeyValuePair } from "@modules/request";
 import { PlaceholderHints } from "./PlaceholderHints";
+import { HiPlusCircle } from "react-icons/hi2";
 
 function updatePairs(
   pairs: KeyValuePair[],
@@ -15,7 +16,12 @@ interface PairEditorProps {
   onChange: (pairs: KeyValuePair[]) => void;
   addLabel: string;
   envValues: ReadonlyMap<string, string>;
+  label: string;
   onFixVariable: (key: string) => void;
+}
+
+function isPairFilled(pair: KeyValuePair): boolean {
+  return pair.key.trim() !== "" && pair.value.trim() !== "";
 }
 
 export function PairEditor({
@@ -23,8 +29,20 @@ export function PairEditor({
   onChange,
   addLabel,
   envValues,
+  label,
   onFixVariable,
 }: PairEditorProps) {
+  const lastPair = pairs.at(-1);
+  const canAdd = pairs.length === 0 || (lastPair != null && isPairFilled(lastPair));
+
+  const addPair = () => {
+    if (!canAdd) return;
+    onChange([
+      ...pairs,
+      { id: crypto.randomUUID(), key: "", value: "", enabled: true },
+    ]);
+  };
+
   return (
     <div>
       {pairs.map((pair) => (
@@ -33,6 +51,7 @@ export function PairEditor({
             enabled={pair.enabled}
             keyName={pair.key}
             value={pair.value}
+            envValues={envValues}
             onEnabledChange={(enabled) => onChange(updatePairs(pairs, pair.id, { enabled }))}
             onKeyChange={(key) => onChange(updatePairs(pairs, pair.id, { key }))}
             onValueChange={(value) => onChange(updatePairs(pairs, pair.id, { value }))}
@@ -47,19 +66,31 @@ export function PairEditor({
           </div>
         </div>
       ))}
-      <Button
-        variant="ghost"
-        size="sm"
-        className="mt-1"
-        onClick={() =>
-          onChange([
-            ...pairs,
-            { id: crypto.randomUUID(), key: "", value: "", enabled: true },
-          ])
-        }
-      >
-        {addLabel}
-      </Button>
+      {pairs.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 gap-2">
+          <p className="text-sm text-gray-500">No {label} added yet. Add one to get started.</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-1 gap-1.5 !text-accent"
+            onClick={addPair}
+          >
+            {addLabel}
+            <HiPlusCircle />
+          </Button>
+        </div>
+      ) : (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mt-1 gap-1.5 !text-accent disabled:hover:!bg-transparent disabled:cursor-not-allowed"
+          disabled={!canAdd}
+          onClick={addPair}
+        >
+          {addLabel}
+          <HiPlusCircle />
+        </Button>
+      )}
     </div>
   );
 }

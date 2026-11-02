@@ -1,4 +1,10 @@
-export type EnvVarRole = "authToken" | "apiKey" | "username" | "password" | "baseUrl";
+export type EnvVarRole =
+  | "authToken"
+  | "apiKey"
+  | "username"
+  | "password"
+  | "baseUrl"
+  | "custom";
 
 export interface EnvironmentVariable {
   id: string;
@@ -10,12 +16,17 @@ export interface EnvironmentVariable {
   deletedAt: string | null;
 }
 
-export const ENV_VAR_ROLES: readonly EnvVarRole[] = [
+export const FIXED_ENV_VAR_ROLES: readonly EnvVarRole[] = [
   "authToken",
   "apiKey",
   "username",
   "password",
   "baseUrl",
+] as const;
+
+export const ENV_VAR_ROLES: readonly EnvVarRole[] = [
+  ...FIXED_ENV_VAR_ROLES,
+  "custom",
 ] as const;
 
 export const ENV_VAR_ROLE_DEFAULT_KEYS: Record<EnvVarRole, string> = {
@@ -24,6 +35,7 @@ export const ENV_VAR_ROLE_DEFAULT_KEYS: Record<EnvVarRole, string> = {
   username: "username",
   password: "password",
   baseUrl: "baseUrl",
+  custom: "",
 };
 
 export const ENV_VAR_ROLE_LABELS: Record<EnvVarRole, string> = {
@@ -32,6 +44,7 @@ export const ENV_VAR_ROLE_LABELS: Record<EnvVarRole, string> = {
   username: "Username",
   password: "Password",
   baseUrl: "Base URL",
+  custom: "Custom",
 };
 
 export const SECRET_ENV_ROLES: ReadonlySet<EnvVarRole> = new Set([

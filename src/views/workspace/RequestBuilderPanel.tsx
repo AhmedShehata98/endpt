@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Button, Input, Select, Tabs } from "@/components";
+import { Button, MentionInput, Select, Tabs } from "@/components";
 import {
   HTTP_METHODS,
   syncParamsFromUrl,
@@ -12,7 +12,7 @@ import type { SendState } from "@/app/workspace-state";
 import { AuthTab } from "./AuthTab";
 import { BodyTab } from "./BodyTab";
 import { PairEditor } from "./PairEditor";
-import { PlaceholderHints } from "./PlaceholderHints";
+import { AiOutlineEnter } from "react-icons/ai";
 import { CgSpinnerTwo } from "react-icons/cg";
 
 type BuilderTab = "params" | "headers" | "body" | "auth";
@@ -83,20 +83,21 @@ export function RequestBuilderPanel({
           ))}
         </Select>
         <div className="min-w-0 flex-1">
-          <Input
+          <MentionInput
             mono
             aria-label="Request URL"
             value={draft.url}
-            onChange={(e) => onUrlChange(e.target.value)}
-            placeholder="https://api.example.com/{{path}}"
+            onChange={onUrlChange}
+            envValues={envValues}
+            placeholder="{{baseUrl}}/api/v1/posts"
             className="h-9 w-full"
             aria-invalid={urlError != null}
           />
-          <PlaceholderHints
+          {/* <PlaceholderHints
             text={draft.url}
             envValues={envValues}
             onFixVariable={onFixVariable}
-          />
+          /> */}
           {urlError && <p className="mt-1 text-[0.75rem] text-error">{urlError}</p>}
         </div>
         <Button
@@ -113,7 +114,10 @@ export function RequestBuilderPanel({
               <p>Sending…</p>
               <CgSpinnerTwo className="animate-spin" />
               </> 
-              : <p>Send</p>
+              : <>
+                 <p>Send</p>
+                 <AiOutlineEnter />
+              </>
           }
         </Button>
       </div>
@@ -139,6 +143,7 @@ export function RequestBuilderPanel({
       <div className="min-h-0 flex-1 overflow-auto p-2">
         {builderTab === "params" && (
           <PairEditor
+            label="parameters"
             pairs={draft.queryParams}
             onChange={onParamsChange}
             addLabel="Add parameter"
@@ -148,6 +153,7 @@ export function RequestBuilderPanel({
         )}
         {builderTab === "headers" && (
           <PairEditor
+            label="headers"
             pairs={draft.headers}
             onChange={(headers) => onDraftChange({ ...draft, headers })}
             addLabel="Add header"

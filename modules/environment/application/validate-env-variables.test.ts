@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { EnvironmentVariable } from "../types/environment.types";
 import {
+  isValidEnvKey,
   roleForDefaultKey,
   unusedEnvRoles,
   validateEnvVariables,
@@ -53,10 +54,36 @@ describe("validateEnvVariables", () => {
       ]),
     ).toEqual([]);
   });
+
+  it("flags empty keys", () => {
+    expect(validateEnvVariables([variable({ id: "1", key: "", role: "custom" })])).toEqual([
+      { id: "1", field: "key", message: "Key is required" },
+    ]);
+  });
+
+  it("flags invalid keys", () => {
+    expect(
+      validateEnvVariables([variable({ id: "1", key: "bad-key", role: "custom" })]),
+    ).toEqual([{ id: "1", field: "key", message: 'Key "bad-key" is invalid' }]);
+  });
+});
+
+describe("isValidEnvKey", () => {
+  it("accepts placeholder-compatible keys", () => {
+    expect(isValidEnvKey("authToken")).toBe(true);
+    expect(isValidEnvKey("_private")).toBe(true);
+    expect(isValidEnvKey("header_1")).toBe(true);
+  });
+
+  it("rejects empty or invalid keys", () => {
+    expect(isValidEnvKey("")).toBe(false);
+    expect(isValidEnvKey("1start")).toBe(false);
+    expect(isValidEnvKey("bad-key")).toBe(false);
+  });
 });
 
 describe("unusedEnvRoles", () => {
-  it("returns all roles when the list is empty", () => {
+  it("returns all fixed roles when the list is empty", () => {
     expect(unusedEnvRoles([])).toEqual([
       "authToken",
       "apiKey",
@@ -66,13 +93,22 @@ describe("unusedEnvRoles", () => {
     ]);
   });
 
-  it("excludes roles already present", () => {
+  it("excludes fixed roles already present", () => {
     expect(
       unusedEnvRoles([
         variable({ id: "1", key: "authToken", role: "authToken" }),
         variable({ id: "2", key: "baseUrl", role: "baseUrl" }),
       ]),
     ).toEqual(["apiKey", "username", "password"]);
+  });
+
+  it("ignores custom roles when computing unused fixed suggestions", () => {
+    expect(
+      unusedEnvRoles([
+        variable({ id: "1", key: "myKey", role: "custom" }),
+        variable({ id: "2", key: "other", role: "custom" }),
+      ]),
+    ).toEqual(["authToken", "apiKey", "username", "password", "baseUrl"]);
   });
 
   it("treats soft-deleted roles as unused", () => {
@@ -97,5 +133,6 @@ describe("roleForDefaultKey", () => {
 
   it("returns null for unknown keys", () => {
     expect(roleForDefaultKey("custom")).toBeNull();
+    expect(roleForDefaultKey("myHeader")).toBeNull();
   });
 });

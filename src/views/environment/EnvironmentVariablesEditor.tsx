@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
-import { Button, EmptyState, SecretInput } from "@/components";
+import { Button, EmptyState, Input, SecretInput } from "@/components";
 import {
   ENV_VAR_ROLE_LABELS,
   SECRET_ENV_ROLES,
@@ -85,7 +85,7 @@ export function EnvironmentVariablesEditor({
         {variables.length === 0 ? (
           <EmptyState
             title="No variables yet"
-            description="Add an auth token, API key, username, password, or base URL to use in requests."
+            description="Add an auth token, API key, username, password, base URL, or a custom variable to use in requests."
             action={
               <Button variant="primary" size="sm" onClick={onAddVariable} disabled={addDisabled}>
                 Add variable
@@ -107,6 +107,7 @@ export function EnvironmentVariablesEditor({
                 const secret = SECRET_ENV_ROLES.has(row.role);
                 const issue = issuesById.get(row.id);
                 const highlighted = highlightKey !== null && row.key === highlightKey;
+                const keyEditable = row.role === "custom";
 
                 return (
                   <tr
@@ -121,7 +122,25 @@ export function EnvironmentVariablesEditor({
                       {ENV_VAR_ROLE_LABELS[row.role]}
                     </td>
                     <td className="px-4 py-2">
-                      <span className="font-mono text-accent">{row.key}</span>
+                      {keyEditable ? (
+                        <Input
+                          mono
+                          value={row.key}
+                          onChange={(e) =>
+                            onVariablesChange(
+                              variables.map((variable) =>
+                                variable.id === row.id
+                                  ? { ...variable, key: e.target.value }
+                                  : variable,
+                              ),
+                            )
+                          }
+                          aria-label={`${row.key || "custom"} key`}
+                          invalid={Boolean(issue)}
+                        />
+                      ) : (
+                        <span className="font-mono text-accent">{row.key}</span>
+                      )}
                       {issue ? (
                         <p className="mt-1 text-[0.75rem] text-error" role="alert">
                           {issue}

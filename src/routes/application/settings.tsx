@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { ThemePreference } from "@modules/account";
 import { HTTP_METHODS, type HttpMethod } from "@modules/request";
 import { Button, Select } from "@/components";
+import { LogoMark } from "@/shell/LogoMark";
 import { useApplicationContext } from "@/state-management/application-context";
 
 export const Route = createFileRoute("/application/settings")({
@@ -154,10 +155,13 @@ function RouteComponent() {
         </Section>
 
         <Section title="About">
-          <p className="text-[0.8125rem] text-text-secondary">
-            Endpt v1.1.0 — lightweight desktop API client for testing and integrating with
-            HTTP endpoints
-          </p>
+          <div className="flex items-start gap-3">
+            <LogoMark className="size-10" />
+            <p className="text-[0.8125rem] text-text-secondary">
+              Endpt v1.1.0 — lightweight desktop API client for testing and integrating with
+              HTTP endpoints
+            </p>
+          </div>
         </Section>
       </div>
     </div>

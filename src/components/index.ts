@@ -1,5 +1,6 @@
 export { Button } from "./Button";
 export { Input } from "./Input";
+export { MentionInput } from "./MentionInput";
 export { SecretInput } from "./SecretInput";
 export { Select } from "./Select";
 export { Tabs } from "./Tabs";

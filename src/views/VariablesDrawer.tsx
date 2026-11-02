@@ -8,7 +8,10 @@ import {
   type EnvironmentVariable,
   type EnvVarRole,
 } from "@modules/environment";
-import { AddVariableDialog } from "./environment/AddVariableDialog";
+import {
+  AddVariableDialog,
+  type CustomVariableInput,
+} from "./environment/AddVariableDialog";
 import { EnvironmentVariablesEditor } from "./environment/EnvironmentVariablesEditor";
 
 interface VariablesDrawerProps {
@@ -41,15 +44,21 @@ function sameVariables(
   });
 }
 
-function shouldOfferAdd(
+function resolveInitialAdd(
   variables: readonly EnvironmentVariable[],
   focusKey: string | null,
-): EnvVarRole | null {
-  if (!focusKey) return null;
+): { open: boolean; pendingRole: EnvVarRole | null; customKey: string | null } {
+  if (!focusKey) {
+    return { open: false, pendingRole: null, customKey: null };
+  }
+  if (variables.some((variable) => variable.key === focusKey && variable.deletedAt === null)) {
+    return { open: false, pendingRole: null, customKey: null };
+  }
   const role = roleForDefaultKey(focusKey);
-  if (!role) return null;
-  if (variables.some((variable) => variable.key === focusKey)) return null;
-  return role;
+  if (role) {
+    return { open: true, pendingRole: role, customKey: null };
+  }
+  return { open: true, pendingRole: null, customKey: focusKey };
 }
 
 export function VariablesDrawer({
@@ -86,15 +95,22 @@ function VariablesDrawerSession({
 }: VariablesDrawerSessionProps) {
   const [baseline] = useState(() => cloneVariables(variables));
   const [draft, setDraft] = useState(() => cloneVariables(variables));
-  const initialOffer = shouldOfferAdd(variables, focusKey);
-  const [addOpen, setAddOpen] = useState(() => initialOffer !== null);
+  const initialAdd = resolveInitialAdd(variables, focusKey);
+  const [addOpen, setAddOpen] = useState(() => initialAdd.open);
   const [pendingAddRole, setPendingAddRole] = useState<EnvVarRole | null>(
-    () => initialOffer,
+    () => initialAdd.pendingRole,
+  );
+  const [customInitialKey, setCustomInitialKey] = useState<string | null>(
+    () => initialAdd.customKey,
   );
   const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   const dirty = useMemo(() => !sameVariables(draft, baseline), [draft, baseline]);
   const availableRoles = unusedEnvRoles(draft);
+  const existingKeys = useMemo(
+    () => draft.filter((variable) => variable.deletedAt === null).map((variable) => variable.key),
+    [draft],
+  );
   const hasValidationErrors = validateEnvVariables(draft).length > 0;
 
   const requestClose = useCallback(() => {
@@ -116,7 +132,13 @@ function VariablesDrawerSession({
     onClose();
   }, [draft, hasValidationErrors, onApply, onClose]);
 
-  const addRole = useCallback((role: EnvVarRole) => {
+  const closeAddDialog = useCallback(() => {
+    setAddOpen(false);
+    setPendingAddRole(null);
+    setCustomInitialKey(null);
+  }, []);
+
+  const addFixed = useCallback((role: EnvVarRole) => {
     setDraft((prev) => [
       ...prev,
       {
@@ -129,9 +151,27 @@ function VariablesDrawerSession({
         deletedAt: null,
       },
     ]);
-    setAddOpen(false);
-    setPendingAddRole(null);
-  }, []);
+    closeAddDialog();
+  }, [closeAddDialog]);
+
+  const addCustom = useCallback(
+    ({ key, role }: CustomVariableInput) => {
+      setDraft((prev) => [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          userId: null,
+          key,
+          value: "",
+          role,
+          updatedAt: new Date().toISOString(),
+          deletedAt: null,
+        },
+      ]);
+      closeAddDialog();
+    },
+    [closeAddDialog],
+  );
 
   const pickerRoles = useMemo(() => {
     if (pendingAddRole && availableRoles.includes(pendingAddRole)) {
@@ -167,9 +207,9 @@ function VariablesDrawerSession({
           onVariablesChange={setDraft}
           onAddVariable={() => {
             setPendingAddRole(null);
+            setCustomInitialKey(null);
             setAddOpen(true);
           }}
-          addDisabled={availableRoles.length === 0}
           highlightKey={focusKey}
           showHeader={false}
         />
@@ -178,11 +218,12 @@ function VariablesDrawerSession({
       <AddVariableDialog
         open={addOpen}
         roles={pickerRoles}
-        onSelect={addRole}
-        onClose={() => {
-          setAddOpen(false);
-          setPendingAddRole(null);
-        }}
+        existingKeys={existingKeys}
+        initialKey={customInitialKey}
+        preferCustom={customInitialKey !== null}
+        onSelectFixed={addFixed}
+        onAddCustom={addCustom}
+        onClose={closeAddDialog}
       />
 
       <Dialog

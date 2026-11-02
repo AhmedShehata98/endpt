@@ -34,7 +34,7 @@ export function BodyTab({
 
   if (disabled) {
     return (
-      <p className="p-1 text-[0.8125rem] text-text-muted">Body is disabled for GET requests.</p>
+      <p className="p-1 text-[0.8125rem] text-text-muted py-12 flex items-center justify-center">Body is disabled for GET requests.</p>
     );
   }
 
