@@ -39,13 +39,19 @@ export function AddVariableDialog({
 
   useEffect(() => {
     if (!open) return;
-    setCustomKey(initialKey ?? "");
+    // #region agent log
+    fetch('http://127.0.0.1:7635/ingest/bcdaf449-dbf5-42ff-82f0-312b883ff178',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c3f57c'},body:JSON.stringify({sessionId:'c3f57c',runId:'pre-fix',hypothesisId:'B,C',location:'AddVariableDialog.tsx:useEffect',message:'reset customKey from initialKey',data:{open,preferCustom,initialKeyType:typeof initialKey,initialKeyIsNull:initialKey===null,initialKeyCtor:initialKey!=null&&typeof initialKey==='object'?(initialKey as object).constructor?.name:null,initialKeyPreview:typeof initialKey==='string'?initialKey:String(initialKey).slice(0,80)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    setCustomKey(typeof initialKey === "string" ? initialKey : "");
     setCustomRole("custom");
   }, [open, initialKey]);
 
   const existingKeySet = useMemo(() => new Set(existingKeys), [existingKeys]);
 
   const customKeyError = useMemo(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7635/ingest/bcdaf449-dbf5-42ff-82f0-312b883ff178',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c3f57c'},body:JSON.stringify({sessionId:'c3f57c',runId:'pre-fix',hypothesisId:'B,C,D',location:'AddVariableDialog.tsx:customKeyError',message:'customKey before trim',data:{customKeyType:typeof customKey,hasTrim:typeof (customKey as {trim?:unknown})?.trim==='function',customKeyCtor:customKey!=null&&typeof customKey==='object'?(customKey as object).constructor?.name:null,customKeyPreview:typeof customKey==='string'?customKey:String(customKey).slice(0,80)},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     const trimmed = customKey.trim();
     if (trimmed === "") return preferCustom || customKey.length > 0 ? "Key is required" : null;
     if (!isValidEnvKey(trimmed)) {

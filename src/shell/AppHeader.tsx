@@ -70,7 +70,7 @@ export function AppHeader({
         <Button
           variant="secondary"
           size="sm"
-          onClick={onOpenVariables}
+          onClick={() => onOpenVariables()}
           aria-label={
             unresolvedCount > 0
               ? `Variables, ${unresolvedCount} unresolved`

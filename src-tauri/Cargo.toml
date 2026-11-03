@@ -30,6 +30,8 @@ base64 = "0.23.1"
 tauri-plugin-http = "2"
 argon2 = "0.5"
 
+[target.x86_64-pc-windows-msvc]
+runner = "cargo-xwin"
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration
 [profile.release]

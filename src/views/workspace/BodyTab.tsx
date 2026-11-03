@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Select } from "@/components";
-import type { BodyType, RequestDraft } from "@modules/request";
+import type { BodyType, KeyValuePair, RequestDraft } from "@modules/request";
 import { PlaceholderHints } from "./PlaceholderHints";
 
 interface BodyTabProps {
@@ -34,19 +34,54 @@ export function BodyTab({
 
   if (disabled) {
     return (
-      <p className="p-1 text-[0.8125rem] text-text-muted py-12 flex items-center justify-center">Body is disabled for GET requests.</p>
+      <p className="text-text-muted flex items-center justify-center p-1 py-12 text-[0.8125rem]">
+        Body is disabled for GET requests.
+      </p>
     );
   }
 
   const showError = bodyError ?? jsonError;
 
+  function onSelectBody(evt: React.ChangeEvent<HTMLSelectElement>) {
+    const bodyType = evt.target.value as BodyType;
+    const filteredHeaders = draft.headers.filter(
+      (header) => header.key.toLowerCase() !== "content-type",
+    );
+    onDraftChange({
+      ...draft,
+      bodyType,
+      ...(bodyType === "json"
+        ? {
+            headers: [
+              ...filteredHeaders,
+              {
+                id: crypto.randomUUID(),
+                key: "Content-Type",
+                value: "application/json",
+                enabled: true,
+              } as KeyValuePair,
+            ],
+          }
+        : {}),
+      ...(bodyType === "raw"
+        ? {
+            headers: [
+              ...filteredHeaders,
+              {
+                id: crypto.randomUUID(),
+                key: "Content-Type",
+                value: "text/plain",
+                enabled: true,
+              } as KeyValuePair,
+            ],
+          }
+        : {}),
+    });
+  }
+
   return (
     <div className="space-y-2 p-1">
-      <Select
-        aria-label="Body type"
-        value={draft.bodyType}
-        onChange={(e) => onDraftChange({ ...draft, bodyType: e.target.value as BodyType })}
-      >
+      <Select aria-label="Body type" value={draft.bodyType} onChange={onSelectBody}>
         <option value="none">None</option>
         <option value="json">JSON</option>
         <option value="raw">Raw</option>
@@ -57,11 +92,11 @@ export function BodyTab({
             aria-label="Request body"
             value={draft.body ?? ""}
             onChange={(e) => onDraftChange({ ...draft, body: e.target.value })}
-            className="min-h-36 w-full resize-y rounded-md border border-border-default bg-bg-subtle p-2 font-mono text-[0.8125rem] text-text-primary"
+            className="border-border-default bg-bg-subtle text-text-primary min-h-36 w-full resize-y rounded-md border p-2 font-mono text-[0.8125rem]"
             placeholder={draft.bodyType === "json" ? '{ "key": "value" }' : "Raw body"}
             aria-invalid={showError != null}
           />
-          {showError && <p className="text-[0.75rem] text-error">{showError}</p>}
+          {showError && <p className="text-error text-[0.75rem]">{showError}</p>}
           <PlaceholderHints
             text={draft.body ?? ""}
             envValues={envValues}

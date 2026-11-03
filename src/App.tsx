@@ -213,7 +213,7 @@ export default function App() {
   }, [draft, send.status, sendDraft, storageReady]);
 
   const openVariables = useCallback((focusKey?: string) => {
-    setVariablesFocusKey(focusKey ?? null);
+    setVariablesFocusKey(typeof focusKey === "string" ? focusKey : null);
     setVariablesOpen(true);
   }, []);
 

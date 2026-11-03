@@ -95,6 +95,9 @@ function VariablesDrawerSession({
 }: VariablesDrawerSessionProps) {
   const [baseline] = useState(() => cloneVariables(variables));
   const [draft, setDraft] = useState(() => cloneVariables(variables));
+  // #region agent log
+  fetch('http://127.0.0.1:7635/ingest/bcdaf449-dbf5-42ff-82f0-312b883ff178',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c3f57c'},body:JSON.stringify({sessionId:'c3f57c',runId:'pre-fix',hypothesisId:'A,E',location:'VariablesDrawer.tsx:session',message:'VariablesDrawerSession mount with focusKey',data:{focusKeyType:typeof focusKey,focusKeyIsNull:focusKey===null,focusKeyCtor:focusKey!=null&&typeof focusKey==='object'?(focusKey as object).constructor?.name:null,focusKeyPreview:typeof focusKey==='string'?focusKey:String(focusKey).slice(0,120),looksLikeEvent:typeof focusKey==='object'&&focusKey!==null&&('nativeEvent' in (focusKey as object)||'target' in (focusKey as object))},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   const initialAdd = resolveInitialAdd(variables, focusKey);
   const [addOpen, setAddOpen] = useState(() => initialAdd.open);
   const [pendingAddRole, setPendingAddRole] = useState<EnvVarRole | null>(

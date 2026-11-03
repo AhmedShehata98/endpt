@@ -214,7 +214,11 @@ function RouteComponent() {
   }, [draft, send.status, sendDraft, storageReady]);
 
   const openVariables = useCallback((focusKey?: string) => {
-    setVariablesFocusKey(focusKey ?? null);
+    const resolvedKey = typeof focusKey === "string" ? focusKey : null;
+    // #region agent log
+    fetch('http://127.0.0.1:7635/ingest/bcdaf449-dbf5-42ff-82f0-312b883ff178',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'c3f57c'},body:JSON.stringify({sessionId:'c3f57c',runId:'post-fix',hypothesisId:'A',location:'route.tsx:openVariables',message:'openVariables called',data:{argType:typeof focusKey,argIsUndefined:focusKey===undefined,argCtor:focusKey!=null&&typeof focusKey==='object'?(focusKey as object).constructor?.name:null,argPreview:typeof focusKey==='string'?focusKey:String(focusKey).slice(0,120),looksLikeEvent:typeof focusKey==='object'&&focusKey!==null&&('nativeEvent' in (focusKey as object)||'target' in (focusKey as object)),resolvedKey},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    setVariablesFocusKey(resolvedKey);
     setVariablesOpen(true);
   }, []);
 
