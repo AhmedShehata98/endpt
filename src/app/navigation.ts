@@ -26,11 +26,13 @@ export const VIEW_TO: Record<AppView, string> = {
   "sign-up": "/sign-up",
 };
 
+export type MainNavId = Extract<
+  AppView,
+  "workspace" | "collections" | "environment" | "teams" | "settings"
+>;
+
 export const MAIN_NAV: Array<{
-  id: Extract<
-    AppView,
-    "workspace" | "collections" | "environment" | "teams" | "settings"
-  >;
+  id: MainNavId;
   to: string;
   label: string;
   icon: IconType;
@@ -40,6 +42,15 @@ export const MAIN_NAV: Array<{
   { id: "environment", to: VIEW_TO.environment, label: "Environment", icon: HiOutlineGlobeAlt },
   { id: "teams", to: VIEW_TO.teams, label: "Teams", icon: HiOutlineUserGroup },
   { id: "settings", to: VIEW_TO.settings, label: "Settings", icon: HiOutlineCog6Tooth },
+];
+
+export const NAV_SECTIONS: Array<{
+  id: "work" | "collaborate";
+  label: string;
+  itemIds: Array<Exclude<MainNavId, "settings">>;
+}> = [
+  { id: "work", label: "Work", itemIds: ["workspace", "collections", "environment"] },
+  { id: "collaborate", label: "Collaborate", itemIds: ["teams"] },
 ];
 
 export function isAuthView(view: AppView): boolean {

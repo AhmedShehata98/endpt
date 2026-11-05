@@ -1,17 +1,21 @@
 import { Button } from "@/components";
-import { MAIN_NAV } from "@/app/navigation";
+import { MAIN_NAV, NAV_SECTIONS, type MainNavId } from "@/app/navigation";
 import { LogoMark } from "./LogoMark";
 import { cn } from "@/lib/cn";
-import { Link } from '@tanstack/react-router';
+import { Link } from "@tanstack/react-router";
 
 interface SidebarProps {
   collapsed: boolean;
   onNewRequest: () => void;
 }
 
+type NavItem = (typeof MAIN_NAV)[number];
+
+const linkClass =
+  "flex h-8 items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium transition-colors";
+
 export function Sidebar({ collapsed, onNewRequest }: SidebarProps) {
   const settings = MAIN_NAV.find((item) => item.id === "settings");
-  const SettingsIcon = settings?.icon;
 
   return (
     <aside
@@ -44,57 +48,55 @@ export function Sidebar({ collapsed, onNewRequest }: SidebarProps) {
         </Button>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-0.5 p-2" aria-label="Main">
-        {MAIN_NAV.filter((item) => item.id !== "settings").map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.id}
-              to={item.to}
-              title={item.label}
-              aria-label={item.label}
-              activeProps={{
-                className: "bg-accent-subtle text-accent",
-                "aria-current": 'page'
-              }}
-              inactiveProps={{
-                className: "text-text-secondary hover:bg-bg-subtle hover:text-text-primary",
-              }} 
-              className={cn(
-                "flex h-8 items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium transition-colors",
-                collapsed && "justify-center px-0", 
-              )}
-            >
-              <Icon aria-hidden className="size-4 shrink-0" />
-              {!collapsed && item.label}
-            </Link>
-          );
-        })}
+      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-2" aria-label="Main">
+        {NAV_SECTIONS.map((section, index) => (
+          <div key={section.id} className="flex flex-col gap-0.5">
+            {collapsed ? (
+              index > 0 && <div className="mx-1.5 my-1 border-t border-border-default" />
+            ) : (
+              <p className="px-2 pb-1 pt-2 text-[0.6875rem] font-medium uppercase tracking-wide text-text-muted">
+                {section.label}
+              </p>
+            )}
+            {section.itemIds.map((id) => {
+              const item = findNavItem(id);
+              return item ? <NavLink key={item.id} item={item} collapsed={collapsed} /> : null;
+            })}
+          </div>
+        ))}
       </nav>
 
-      {settings && SettingsIcon && (
+      {settings && (
         <div className="border-t border-border-default p-2">
-          <Link
-            to={settings.to}
-            title={settings.label}
-            aria-label={settings.label}
-            activeProps={{
-              className: "bg-accent-subtle text-accent",
-              "aria-current": 'page'
-            }}
-            inactiveProps={{
-              className: "text-text-secondary hover:bg-bg-subtle hover:text-text-primary",
-            }}
-            className={cn(
-              "flex h-8 w-full items-center gap-2 rounded-md px-2 text-[0.8125rem] font-medium transition-colors",
-              collapsed && "justify-center px-0",
-            )}
-          >
-            <SettingsIcon aria-hidden className="size-4 shrink-0" />
-            {!collapsed && settings.label}
-          </Link>
+          <NavLink item={settings} collapsed={collapsed} />
         </div>
       )}
     </aside>
+  );
+}
+
+function findNavItem(id: MainNavId): NavItem | undefined {
+  return MAIN_NAV.find((item) => item.id === id);
+}
+
+function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
+  const Icon = item.icon;
+  return (
+    <Link
+      to={item.to}
+      title={item.label}
+      aria-label={item.label}
+      activeProps={{
+        className: "bg-accent-subtle text-accent",
+        "aria-current": "page",
+      }}
+      inactiveProps={{
+        className: "text-text-secondary hover:bg-bg-subtle hover:text-text-primary",
+      }}
+      className={cn(linkClass, collapsed && "justify-center px-0")}
+    >
+      <Icon aria-hidden className="size-4 shrink-0" />
+      {!collapsed && item.label}
+    </Link>
   );
 }
