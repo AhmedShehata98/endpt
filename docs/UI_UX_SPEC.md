@@ -45,20 +45,25 @@ Endpt is a lightweight desktop API client. It makes testing and integrating with
 
 ### Out of scope (do not design or build)
 
-Automated/scheduled/CI testing, test runner, scripts, load testing, mock servers, GraphQL / WebSocket / gRPC, OpenAPI import, documentation or code/SDK generation, team collaboration, mobile, request history, multiple named environments, folders, import/export, cookies viewer, browser-extension packaging.
+Automated/scheduled/CI testing, test runner, scripts, load testing, mock servers, GraphQL / WebSocket / gRPC, OpenAPI import, documentation or code/SDK generation, real-time multi-user editing, mobile, personal request history, multiple named environments for personal data, folders, import/export, cookies viewer, browser-extension packaging.
+
+Team Collaboration UI (Teams nav, members, invites, clone, role warnings) is in scope; detailed flows follow [`features/team-collaboration/`](./features/team-collaboration/) and [ADR-009](./adr/ADR-009-team-collaboration-firebase.md).
 
 ---
 
 ## 3. Information Architecture
 
-### Top-level views (4)
+### Top-level views
 
 | # | View | Purpose | Primary action | PRD |
 |--:|---|---|---|---|
 | 1 | **Workspace** | Build, send, and inspect a request | Send | FR-01–10 |
-| 2 | **Collections** | Organize projects, collections, and saved requests | Open / Save request | FR-19–21 |
-| 3 | **Environment** | Manage environment variables | Add variable | FR-11–14 |
-| 4 | **Settings** | Preferences, account, sync | Save preference | FR-15–17 |
+| 2 | **Collections** | Organize personal (and later team) projects, collections, and saved requests | Open / Save request | FR-19–21, FR-24 |
+| 3 | **Environment** | Manage personal environment variables | Add variable | FR-11–14 |
+| 4 | **Teams** | Create/manage teams, members, invitations (cloud-linked) | Create team / Invite | FR-22–25 |
+| 5 | **Settings** | Preferences, account, sync | Save preference | FR-15–17 |
+
+Teams UI details and role-gated patterns: [`features/team-collaboration/`](./features/team-collaboration/).
 
 ### Auth screens (2)
 

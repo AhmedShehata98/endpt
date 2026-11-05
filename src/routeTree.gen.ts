@@ -17,6 +17,7 @@ import { Route as ApplicationIndexRouteImport } from './routes/application/index
 import { Route as ApplicationCollectionsRouteImport } from './routes/application/collections'
 import { Route as ApplicationEnvironmentRouteImport } from './routes/application/environment'
 import { Route as ApplicationSettingsRouteImport } from './routes/application/settings'
+import { Route as ApplicationTeamsRouteImport } from './routes/application/teams'
 import { Route as ApplicationWorkspaceRouteImport } from './routes/application/workspace'
 
 const IndexRoute = IndexRouteImport.update({
@@ -59,6 +60,11 @@ const ApplicationSettingsRoute = ApplicationSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => ApplicationRouteRoute,
 } as any)
+const ApplicationTeamsRoute = ApplicationTeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
+  getParentRoute: () => ApplicationRouteRoute,
+} as any)
 const ApplicationWorkspaceRoute = ApplicationWorkspaceRouteImport.update({
   id: '/workspace',
   path: '/workspace',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/application/collections': typeof ApplicationCollectionsRoute
   '/application/environment': typeof ApplicationEnvironmentRoute
   '/application/settings': typeof ApplicationSettingsRoute
+  '/application/teams': typeof ApplicationTeamsRoute
   '/application/workspace': typeof ApplicationWorkspaceRoute
   '/application/': typeof ApplicationIndexRoute
 }
@@ -83,6 +90,7 @@ export interface FileRoutesByTo {
   '/application/collections': typeof ApplicationCollectionsRoute
   '/application/environment': typeof ApplicationEnvironmentRoute
   '/application/settings': typeof ApplicationSettingsRoute
+  '/application/teams': typeof ApplicationTeamsRoute
   '/application/workspace': typeof ApplicationWorkspaceRoute
   '/application': typeof ApplicationIndexRoute
 }
@@ -95,6 +103,7 @@ export interface FileRoutesById {
   '/application/collections': typeof ApplicationCollectionsRoute
   '/application/environment': typeof ApplicationEnvironmentRoute
   '/application/settings': typeof ApplicationSettingsRoute
+  '/application/teams': typeof ApplicationTeamsRoute
   '/application/workspace': typeof ApplicationWorkspaceRoute
   '/application/': typeof ApplicationIndexRoute
 }
@@ -108,6 +117,7 @@ export interface FileRouteTypes {
     | '/application/collections'
     | '/application/environment'
     | '/application/settings'
+    | '/application/teams'
     | '/application/workspace'
     | '/application/'
   fileRoutesByTo: FileRoutesByTo
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/application/collections'
     | '/application/environment'
     | '/application/settings'
+    | '/application/teams'
     | '/application/workspace'
     | '/application'
   id:
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/application/collections'
     | '/application/environment'
     | '/application/settings'
+    | '/application/teams'
     | '/application/workspace'
     | '/application/'
   fileRoutesById: FileRoutesById
@@ -198,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApplicationSettingsRouteImport
       parentRoute: typeof ApplicationRouteRoute
     }
+    '/application/teams': {
+      id: '/application/teams'
+      path: '/teams'
+      fullPath: '/application/teams'
+      preLoaderRoute: typeof ApplicationTeamsRouteImport
+      parentRoute: typeof ApplicationRouteRoute
+    }
     '/application/workspace': {
       id: '/application/workspace'
       path: '/workspace'
@@ -212,6 +231,7 @@ interface ApplicationRouteRouteChildren {
   ApplicationCollectionsRoute: typeof ApplicationCollectionsRoute
   ApplicationEnvironmentRoute: typeof ApplicationEnvironmentRoute
   ApplicationSettingsRoute: typeof ApplicationSettingsRoute
+  ApplicationTeamsRoute: typeof ApplicationTeamsRoute
   ApplicationWorkspaceRoute: typeof ApplicationWorkspaceRoute
   ApplicationIndexRoute: typeof ApplicationIndexRoute
 }
@@ -220,6 +240,7 @@ const ApplicationRouteRouteChildren: ApplicationRouteRouteChildren = {
   ApplicationCollectionsRoute: ApplicationCollectionsRoute,
   ApplicationEnvironmentRoute: ApplicationEnvironmentRoute,
   ApplicationSettingsRoute: ApplicationSettingsRoute,
+  ApplicationTeamsRoute: ApplicationTeamsRoute,
   ApplicationWorkspaceRoute: ApplicationWorkspaceRoute,
   ApplicationIndexRoute: ApplicationIndexRoute,
 }

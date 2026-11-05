@@ -523,6 +523,18 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 
 ---
 
+### Phase 11: Team Collaboration (Firebase)
+
+**Goal:** Multi-user teams on Firebase Auth + client Firestore (Spark) without changing personal local-first sync.
+
+**Details:** Chunked plan and feature SoT — [`features/team-collaboration/`](./features/team-collaboration/), [ADR-009](./adr/ADR-009-team-collaboration-firebase.md), [ADR-010](./adr/ADR-010-team-policy-module.md). Do not duplicate matrices or schema here.
+
+**Exit criteria:** Alpha slices (teams/members → invites → team projects → clone) via `FirestoreTeamRemote` + security rules (no Blaze / Functions required).
+
+**Dependencies:** Phases 6, 8, 10 (account + Firebase link + routing).
+
+---
+
 ## 6. Dependencies and Parallel Tracks
 
 | Phase | Depends on |
@@ -538,8 +550,9 @@ UI v1.0 disables **Send** while a request is in flight and has no Cancel button.
 | 8 Cloud sync | 1, 5, 6, 7 |
 | 9 Release | 0–8 |
 | 10 TanStack Router migration | 0–9 |
+| 11 Team Collaboration | 6, 8, 10 |
 
-After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environment (5)**, **Accounts (6)**. Then **Projects (7)** → **Sync (8)** → **Release (9)**. **Phase 10** refactors navigation after MVP.
+After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environment (5)**, **Accounts (6)**. Then **Projects (7)** → **Sync (8)** → **Release (9)**. **Phase 10** refactors navigation after MVP. **Phase 11** adds teams on Firebase.
 
 ---
 
@@ -550,10 +563,10 @@ After Phase 2, run in parallel: **Workspace → Response (3 → 4)**, **Environm
 - Mock servers
 - GraphQL, WebSocket, gRPC
 - OpenAPI/Swagger import, documentation generation, code or SDK generation
-- Team collaboration or real-time multi-user editing
+- Real-time multi-user editing
 - Mobile apps; browser-extension or browser-tab packaging
-- Request history and response archives
-- Multiple named environments and an environment selector
+- Personal request history and response archives
+- Multiple named environments and an environment selector (personal)
 - Folders inside collections; duplicate and move actions
 - Import/export
 - Cookies viewer; request cancel button; command palette

@@ -31,9 +31,18 @@
 - Mock servers or API mocking
 - GraphQL, WebSocket, or gRPC clients
 - OpenAPI/Swagger import or API documentation generation
-- Team collaboration or real-time multi-user editing
+- Real-time multi-user editing (CRDT / simultaneous cursors)
 - Code or SDK generation
 - Mobile applications
+
+### Team Collaboration (in scope; see feature docs)
+
+Requirements and rules live under [`docs/features/team-collaboration/`](./features/team-collaboration/). Stack: Firebase Auth + client Firestore on Spark ([ADR-009](./adr/ADR-009-team-collaboration-firebase.md)). Personal local-first data is unchanged (FR-16–FR-18).
+
+- **FR-22:** A signed-in, cloud-linked user can create a team and become its Owner.
+- **FR-23:** Team Owner/Admin can invite members; members hold Owner, Admin, Editor, or Viewer roles per the Team Business Rules.
+- **FR-24:** Team projects are accessed via project membership or Implicit Access (Owner/Admin); personal projects are not shared directly (Clone to Team only).
+- **FR-25:** Owner can soft-delete a team with a recovery window; permanent purge follows feature rules.
 
 ## 3. Functional Requirements
 - **FR-01:** The user can create and send a request on the fly without creating a project or collection.
@@ -123,7 +132,7 @@
 - Cloud sync is optional; users can complete core workflows without an account or network
 - Environment variables cover common auth and base URL values, plus optional custom keys for other placeholders
 - Most responses users care about are JSON or HTML
-- A single-user account model is sufficient; team or shared workspaces are not required in this version
+- Personal workflows remain single-user and local-first; team collaboration requires network and Firebase ([ADR-009](./adr/ADR-009-team-collaboration-firebase.md))
 
 ## 7. Success Metrics
 - **Time to first request:** New user can send an ad-hoc request in under 30 seconds without creating a project or collection

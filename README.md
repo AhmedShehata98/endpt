@@ -56,14 +56,27 @@ Sync uses Firebase Auth + Firestore ([ADR-006](docs/adr/ADR-006-firebase-sync.md
 
 Without Firebase config, the app stays local-only with a clear sync error. HTTP capability scopes for arbitrary APIs are documented in [ADR-007](docs/adr/ADR-007-http-capability-scope.md).
 
+## Team collaboration (optional)
+
+Teams use Firebase Auth + **client Firestore** on the free Spark plan ([ADR-009](docs/adr/ADR-009-team-collaboration-firebase.md)). No Blaze upgrade and no Cloud Functions deploy required. Personal SQLite sync is unchanged.
+
+```bash
+firebase deploy --only firestore:rules,firestore:indexes
+```
+
+Cloud-link the account (Settings → sync) so Firebase Auth is signed in before using Teams. Without Firebase config, the Teams UI uses an in-memory fake remote.
+
+Optional later (Blaze only): `functions/` callables remain in the repo but are not part of the default deploy.
+
 ## Stack
 
 - Desktop shell: Tauri 2
 - UI: React 19 + TypeScript (strict) + Vite + Tailwind CSS 4
-- Modules under `modules/` (request, response, environment, account, project, sync, persistence)
+- Modules under `modules/` (request, response, environment, account, project, sync, team, persistence)
 
 ## Docs
 
 - [Implementation plan](docs/IMPLEMENTATION_PLAN.md)
 - [Performance notes](docs/PERF_NOTES.md)
 - [PRD](docs/PRD.md) · [Architecture](docs/ARCHITECTURE.md) · [Data model](docs/DATA_MODEL.md) · [UI/UX](docs/UI_UX_SPEC.md)
+- [Team feature docs](docs/features/team-collaboration/)

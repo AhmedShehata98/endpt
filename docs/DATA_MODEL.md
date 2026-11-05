@@ -244,7 +244,7 @@ FR-16, FR-18, AC-15, AC-16, NFR-02, NFR-03.
 | Syncable | UserSettings, Project, Collection, SavedRequest, EnvironmentVariable |
 | Local-only | Session, AdHocRequest, ResponseView, `UserAccount.passwordHash` |
 | Secrets | Encrypt env values and auth fields at rest; TLS in transit; client-encrypt secrets before upload |
-| Conflicts | Last-write-wins per entity via `updatedAt` (single-user; no team edit) |
+| Conflicts | Last-write-wins per entity via `updatedAt` (**personal** sync only; teams: [ADR-009](./adr/ADR-009-team-collaboration-firebase.md)) |
 | Deletes | Soft-delete via `deletedAt`, then purge after sync |
 | Unsigned / offline | Full build-send-save-local and env management without network |
 
@@ -259,10 +259,16 @@ Per PRD §2 / §6:
 - Mock servers
 - GraphQL / WebSocket / gRPC
 - OpenAPI docs or SDK generation
-- Teams / shared workspaces / real-time collab
-- Multiple named environments (Postman-style) — add later only if needed
-- Request history / response archives
+- Real-time multi-user editing
+- Multiple named environments for **personal** data (Postman-style) — personal env stays flat per user
+- Personal request history / response archives (team execution history is modeled in feature docs)
 - Mobile-specific profiles
+
+### Team entities (pointer)
+
+Team, membership, invitation, team-project, audit, and related shapes are defined in [`features/team-collaboration/TEAM_DATA_MODEL.md`](./features/team-collaboration/TEAM_DATA_MODEL.md) and stored in Firestore per [ADR-009](./adr/ADR-009-team-collaboration-firebase.md). Do not duplicate those tables here.
+
+Personal `Project` remains `userId`-owned. Team projects live under `teams/{teamId}/projects/{projectId}` and are not part of personal LWW sync.
 
 ---
 
@@ -291,4 +297,5 @@ Per PRD §2 / §6:
 | `modules/request` | RequestDraft, AdHocRequest, SavedRequest, send pipeline |
 | `modules/environment` | EnvironmentVariable, `{{key}}` resolution |
 | `modules/response` | ResponseView, prettify / copy / fullscreen |
-| `modules/sync` | Cloud sync, tombstones, LWW |
+| `modules/sync` | Cloud sync, tombstones, LWW (personal) |
+| `modules/team` | Team policy, TeamRemote, team UI orchestration |

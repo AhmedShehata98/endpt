@@ -343,6 +343,8 @@ function RouteComponent() {
                 setVariables,
                 displayName: session.displayName,
                 email: session.account?.email ?? null,
+                accountId: session.account?.id ?? null,
+                cloudUserId: session.account?.cloudUserId ?? null,
                 lastSyncedAt: sync.lastSyncedAt,
                 syncStatusLabel,
                 syncBusy: sync.busy,

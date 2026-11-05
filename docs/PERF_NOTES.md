@@ -28,6 +28,7 @@
 - Large response prettify deferred off the hot path (`useFormattedBody`, 50k+ chars)
 - Sync never blocks startup; memory/SQLite repos load locally first
 - Stale sends ignored via send token in `RequestService` (UI has no Cancel)
+- Team Cloud Function calls must not block personal Collections local-load path (ADR-009)
 
 ## How to re-measure
 
@@ -35,3 +36,4 @@
 2. Editor nav: switch Params → Headers → Body → Auth; confirm paint feels under 450 ms.
 3. Local load: signed-in account with several projects; open Collections and note time to tree paint.
 4. Package size: `ls -lh` under `src-tauri/target/release/bundle/` (or Cargo target dir used by the build).
+5. Team path (separate): open Teams with network; confirm personal Collections still paints under 450 ms without waiting on team Firestore calls.

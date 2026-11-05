@@ -64,6 +64,8 @@ export interface ApplicationContextValue {
   setVariables: (variables: EnvironmentVariable[]) => void;
   displayName: string | null;
   email: string | null;
+  accountId: string | null;
+  cloudUserId: string | null;
   lastSyncedAt: string | null;
   syncStatusLabel: string;
   syncBusy: boolean;

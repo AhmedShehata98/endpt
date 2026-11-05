@@ -15,6 +15,13 @@ import {
   createSyncKeyStore,
   type SyncRemote,
 } from "@modules/sync";
+import {
+  FakeTeamRemote,
+  FirestoreTeamRemote,
+  TeamService,
+  createDefaultTeamRemote,
+} from "@modules/team";
+import { readFirebaseWebConfig } from "@modules/sync/infrastructure/firebase-sync-remote";
 
 let reposPromise: Promise<AppRepositories> | null = null;
 
@@ -74,3 +81,13 @@ export function createSyncService(
     createPasswordHasher(),
   );
 }
+
+/** Spark-compatible: client Firestore. No Cloud Functions / Blaze required. */
+export function createTeamService(userId?: string): TeamService {
+  if (isE2eMode() || !readFirebaseWebConfig()) {
+    return new TeamService(new FakeTeamRemote(userId ?? "local-user"));
+  }
+  return new TeamService(new FirestoreTeamRemote());
+}
+
+export { createDefaultTeamRemote };

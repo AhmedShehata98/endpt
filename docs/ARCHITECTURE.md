@@ -31,7 +31,8 @@ App present solution for backend (API) Integration and testing easier with light
   - **Response:** Displays response status, headers, body, and performance information.
   - **Projects / Collections:** Manage project metadata, collections, and saved requests.
   - **Environment:** Environment variables and placeholder resolution.
-  - **Account / Sync:** Optional accounts and cloud sync.
+  - **Account / Sync:** Optional accounts and cloud sync (personal).
+  - **Team:** Team collaboration policy and Firestore client ([ADR-009](./adr/ADR-009-team-collaboration-firebase.md)).
   - **Persistence:** Local storage adapters (separate from HTTP execution).
 - Ensure that each module exposes a clear interface and does not depend unnecessarily on other modules' internal implementations.
 - Within modules, separate Presentation, Application, Infrastructure, and Ports where needed.
@@ -343,6 +344,7 @@ modules/
 ├── environment/
 ├── account/
 ├── sync/
+├── team/                      # Team policy + TeamRemote (Firestore/Functions; ADR-009)
 └── persistence/               # SQLite adapters, secret cipher (ports stay in owning modules)
 src/
 ├── app/                       # composition root, navigation path helpers
@@ -369,7 +371,8 @@ Other modules follow the same idea when they need Application logic, ports, or I
 - **response:** Response viewing concerns.
 - **project:** Projects and collections (no nested folders inside collections for MVP).
 - **environment:** Variables and `{{key}}` resolution used before send.
-- **account / sync:** Optional identity and cloud sync. Sync uses a `SyncRemote` port; production adapter is Firebase Auth + Firestore ([ADR-006](./adr/ADR-006-firebase-sync.md)); SQLite stays the offline source of truth.
+- **account / sync:** Optional identity and cloud sync. Sync uses a `SyncRemote` port; production adapter is Firebase Auth + Firestore ([ADR-006](./adr/ADR-006-firebase-sync.md)); SQLite stays the offline source of truth for **personal** data.
+- **team:** Team collaboration. Mutations via client Firestore (`FirestoreTeamRemote`) + policy in `application/policy` ([ADR-009](./adr/ADR-009-team-collaboration-firebase.md), [ADR-010](./adr/ADR-010-team-policy-module.md)). Feature requirements: [`features/team-collaboration/`](./features/team-collaboration/).
 - **persistence:** Local SQLite adapters and encryption helpers; repository ports live in owning modules.
 - **src:** Tauri/React shell, TanStack Router routes, composition root (injects Infrastructure into Application), and shared application context.
 
@@ -428,11 +431,11 @@ Local development vs production builds via standard Vite/Tauri env configuration
 
 ### ADR-004: No Domain Layer for MVP
 
-- **Status:** Accepted
+- **Status:** Accepted (personal/MVP path); superseded for teams by [ADR-010](./adr/ADR-010-team-policy-module.md)
 - **Context:** MVP rules are mostly validation and orchestration, not rich domain invariants.
 - **Decision:** Omit a Domain Layer until real domain rules justify it.
 - **Alternatives:** Introduce entities/use-case domain packages now.
-- **Consequences:** Simpler tree; Application + ports cover current needs.
+- **Consequences:** Simpler tree; Application + ports cover current needs. Team Collaboration adds a focused policy module only ([ADR-010](./adr/ADR-010-team-policy-module.md)).
 
 ### ADR-008: TanStack Router instead of in-memory view state
 
@@ -442,7 +445,7 @@ Local development vs production builds via standard Vite/Tauri env configuration
 - **Alternatives:** Keep `setView` enum switching; React Router; custom history wrapper.
 - **Consequences:** URL-backed navigation; page UI lives in route files; legacy `App.tsx` and page-level `*View.tsx` files are marked TODO DELETED; shared panels/dialogs remain under `src/views/`.
 
-See also [ADR-005](./adr/ADR-005-local-persistence.md) (SQLite) and [ADR-006](./adr/ADR-006-firebase-sync.md) (Firebase sync).
+See also [ADR-005](./adr/ADR-005-local-persistence.md) (SQLite), [ADR-006](./adr/ADR-006-firebase-sync.md) (personal Firebase sync), [ADR-009](./adr/ADR-009-team-collaboration-firebase.md) (teams), and [ADR-010](./adr/ADR-010-team-policy-module.md) (team policy).
 
 ---
 

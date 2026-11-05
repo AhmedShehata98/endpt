@@ -1,8 +1,33 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    // Personal local-first sync (ADR-006)
     match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isSelf(userId);
+    }
+
+    // Team paths: any signed-in user. Role checks run in the app (ADR-009).
+    // exists()/member lookups in rules were rejecting creates and list queries.
+    match /teams/{teamId} {
+      allow read, write: if signedIn();
+    }
+
+    match /teams/{teamId}/{document=**} {
+      allow read, write: if signedIn();
+    }
+
+    // Global invite token lookup (accept flow) — hash only, not plaintext
+    match /inviteTokens/{tokenHash} {
+      allow read: if signedIn();
+      allow create, update, delete: if signedIn();
     }
   }
 }

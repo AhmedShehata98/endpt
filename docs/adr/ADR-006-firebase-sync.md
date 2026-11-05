@@ -27,5 +27,5 @@ Use **Firebase Authentication (email/password)** and **Cloud Firestore** as the 
 ## Consequences
 
 - Requires a Firebase project and Vite `VITE_FIREBASE_*` config; missing config keeps sync disabled with a clear status message.
-- Conflict rule stays last-write-wins by `updatedAt` (single-user; no team edit).
+- Conflict rule stays last-write-wins by `updatedAt` for **personal** entities only (single-user path). Team collaboration does **not** use this LWW sync model; see [ADR-009](./ADR-009-team-collaboration-firebase.md).
 - Soft-delete tombstones sync, then purge after both sides acknowledge.
